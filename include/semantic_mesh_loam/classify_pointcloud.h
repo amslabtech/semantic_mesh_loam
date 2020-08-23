@@ -6,22 +6,75 @@
 #include"sensor_msgs/PointCloud2.h"
 #include"pcl_ros/point_cloud.h"
 
-class SemClassifer{
+namespace semloam{
 
-	private:
-		ros::NodeHandle nh;
+	class RegistrationParams{
+		public:
+			RegistrationParams(const float& scanperiod_ = 0.1,
+					const int& imuhistorysize_ = 200,
+					const int& odomhistorysize_ = 200,
+					const int& nfeatureregions_ = 6,
+					const int& curvatureregion_ = 5,
+					const int& maxcornersharp_ = 4,
+					const float& lessflatfiltersize_ = 0.2,
+					const float& surfacecurvaturethreshold_ = 0.1);
+			
+			
+			float scanperiod;
 
-		sensor_msgs::PointCloud2 segmented_points;
+			int imuhistorysize;
 
-		pcl::PointCloud<pcl::PointXYZRGB> lasercloudin:
+			int odomhistorysize;
 
-		semantic_dictionary dict[34];
+			int nfeatureregions;
 
-		ros::Subscriber velo_sub;
-		ros::Publisher classified_pub;
+			int curvatureregion;
 
-	public:
-		SemClassifer(viod);
-		void process();
-		void colored_point_callback(const sensor_msgs::PointCloud2i::Constptr& msg);
+			int maxcornersharp;
 
+			float lessflatfiltersize;
+
+			float surfacecurvaturethreshold;
+
+
+	};
+
+	class SemClassifer{
+
+		public:
+			SemClassifer();
+
+			bool setup(ros::NodeHandle& node, ros::NodeHandle& privateNode);
+
+			void pointcloud_callback(const sensor_msgs::PointCloud2ConstPtr &laserscan);
+
+			bool setParams(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
+			bool parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out);
+
+		private:
+
+			bool setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
+
+			bool configure(const TegistrationParams& config = RegistrationParams());
+
+			void process();
+
+		private:
+
+			//RegistrationParams _config;
+			//CircularBuffer<IMUstate> _imuhistory;
+			//CircularBuffer<Odomstate> _odomhistory;
+
+			ros::Subscriber _subLaserCloud;
+
+			ros::Publisher _pubLaserCloud;
+			ros::Publisher _pubCentroid;
+			ros::Publisher _pubEdge;
+
+
+
+	};
+
+
+
+}

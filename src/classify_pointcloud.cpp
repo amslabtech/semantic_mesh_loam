@@ -1,14 +1,17 @@
 #include"semantic_mesh_loam/classify_pointcloud.h"
-
-void SemClassifer::process(void){
-	a;
-}
+#include"ros/ros.h"
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "classify_pointcloud");
+	ros::NodeHandle node;
+	ros::NodeHandle privateNode("~");
 	
-	SemClassifer semclassifer;
-	semclassifer.process();
+	semloam::SemClassifer semclassifer;
+
+	if(semclassifer.setup(node, privateNode)){
+
+		ros::spin();
+	}
 
 	return 0;
 }

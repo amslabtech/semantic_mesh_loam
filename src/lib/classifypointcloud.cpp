@@ -1,0 +1,145 @@
+#include"semantic_mesh_loam/classify_pointcloud.h"
+
+#include<pcl_conversions/pcl_conversions.h>
+
+namespace semloam{
+
+	bool SemClassifer::parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out){
+		bool success = true;
+		int iParam = 0;
+		float fParam = 0.0;
+
+		if(privateNode.getParam("scanperiod",fParam)){
+			if(fParam <= 0){
+				ROS_ERROR("Invalid scanPeriod parameter");
+				success = false;
+			}
+			else{
+				config_out.scanperiod = fParam;
+				ROS_INFO("Set scanperiod %g", fParam);
+			}
+		}
+		if(privateNode.getParam("imuhistorysize",iParam)){
+			if(iParam < 1){
+				ROS_ERROR("Invalid imuhistory parameter");
+				success = false;
+			}
+			else{
+				config_out.imuhistorysize = iParam;
+				ROS_INFO("Set imuhistory %d", iParam);
+			}
+		}
+
+		if(privateNode.getParam("odomhistorysize",iParam)){
+			if(iParam < 1){
+				ROS_ERROR("Invalid odomhistory parameter");
+				success = false;
+			}
+			else{
+				config_out.odomhistorysize = iParam;
+				ROS_INFO("Set odomhistorysize %d", iParam);
+			}
+		}
+		if(privateNode.getParam("nfeatureregions",iParam)){
+			if(iParam < 1){
+				ROS_ERROR("Invalid nfeatureregions parameter");
+				success = false;
+			}
+			else{
+				config_out.nfeatureregions = iParam;
+				ROS_INFO("Set nfeatureregions %d", iParam);
+			}
+		}
+		if(privateNode.getParam("curvatureregion",iParam)){
+			if(iParam < 1){
+				ROS_ERROR("Invalid curvatureregion parameter");
+				success = false;
+			}
+			else{
+				config_out.curvatureregions = iParam;
+				ROS_INFO("Set curvatureregion %d", iParam);
+			}
+		}
+
+		if(privateNode.getParam("maxcornersharp",iParam)){
+			if(iParam < 1){
+				ROS_ERROR("Invalid maxcornersharp parameter");
+				success = false;
+			}
+			else{
+				config_out.maxcornersharp = iParam;
+				ROS_INFO("Set maxcornersharp %d", iParam);
+			}
+		}
+
+		if(privateNode.getParam("surfacecurvaturethreshold",fParam)){
+			if(fParam <= 0.001){
+				ROS_ERROR("Invalid surfacecurvaturethreshold parameter");
+				success = false;
+			}
+			else{
+				config_out.surfacecurvaturethreshold = fParam;
+				ROS_INFO("Set surfacecurvaturethreshold %g", fParam);
+			}
+		}
+
+		if(privateNode.getParam("lessflatfiltersize",fParam)){
+			if(fParam <= 0.001){
+				ROS_ERROR("Invalid lessflatfiltersize parameter");
+				success = false;
+			}
+			else{
+				config_out.lessflatfiltersize = fParam;
+				ROS_INFO("Set lessflatfiltersize %g", fParam);
+			}
+		}
+
+		return success;
+	}
+
+
+	bool SemClassifer::setParams(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out){
+		if(!parseParams(privateNode, config_out)){
+			return false;
+		}
+
+		_pubLaserCloud = node.advertise<sensor_msgs::PointCloud2>("/velodyne_points2", 2);
+		_pubCentroid = node.advertise<sensor_msgs::PointCloud2>("/centroid_points", 2);
+		_pubEdge = node.advertise<sensor_msgs::PointCloud2>("/edge_points", 2);
+
+		return true;
+	}
+
+	bool SemClassifer::configure(const RegistrationParams& config){
+		//_config = config;
+		//_imuhistory.ensureCapacity(_config.imuhistory);
+		//_odomhistory.ensureCapacity(_config.odomhistorysize);
+
+		return true;
+	}
+
+	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
+
+		RegistrationParams config;
+
+		if(!setupROS(node, privateNode, config)){
+			return false;
+		}
+
+		configure(config);
+
+		return true;
+	}
+
+	bool SemClassifer::setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config){
+
+		if(!setParams(node, privateNode, config)){
+				return false;
+		}
+
+		std::string lidarName;
+
+
+	}
+				
+}
