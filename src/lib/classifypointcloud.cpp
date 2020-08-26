@@ -4,6 +4,20 @@
 
 namespace semloam{
 
+	MultiScanMapper::MultiScanMapper(const float& lowerBound, const float& upperBound, const uint16_t&nScanRings)
+		:_lowerBound(lowerBound),
+		 _upperBound(upperBound),
+		 _nScanRings(nScanRings),
+		 _factor( (nScanRings -1 ) / (upperBound - lowerBound) ){}
+	
+
+	void MultiScanMapper::set(const float& lowerBound, const float& upperBound, const uint16_t& nScanRings){
+		_lowerBound = lowerBound;
+		_upperBound = upperBound;
+		_nScanRings = nScanRings;
+		_factor = (nScanRings -1 ) / (upperBound - lowerBound);
+	}
+
 	bool SemClassifer::parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out){
 		bool success = true;
 		int iParam = 0;
@@ -118,6 +132,10 @@ namespace semloam{
 		return true;
 	}
 
+
+	SemClassifer::SemClassifer(const MultiScanMapper& scanMapper)
+		: _scanMapper(scanMapper){};
+
 	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
 
 		RegistrationParams config;
@@ -139,7 +157,56 @@ namespace semloam{
 
 		std::string lidarName;
 
+		if(privateNode.getParam("lidar", lidarName)){
+			if(lidarName == "VLP-16"){
+				_scanMapper = MultiScanMapper::Velodyne_VLP_16();
+			}
+			else if(lidarName == "HDL-32"){
+				_scanMapper = MultiScanMapper::Velodyne_HDL_32();
+			}
+			else if(lidarName == "HDL-64E"){
+				_scanMapper = MultiScanMapper::Velodyne_HDL64E();
+			}
+			else{
+				ROS_ERROR("Invalid lidar parameter");
+				return false;
+			}
 
+			ROS_INFO("Set %s scan mappe.", lidarName.c_str());
+
+			if(!privateNode.hasParam("scanPeriod")){
+				config.scanperiod = 0.1;
+
+				ROS_INFO("Set scan period: %f", config.scanperiod);
+			}
+		}
+		else{
+			float vAngleMin, vAngleMax;
+			int nScanRings;
+
+			if(             privateNode.getParam("maxVerticalAngle", vAngleMin) &&
+					privateNode.getParam("maxVerticalAngle", vAngleMax) &&
+					privateNode.getParam("nScanRings", nScanRings) ){
+				if(vAngleMIn >= vAngleMax ){
+					ROS_ERROR("Invalid vertical range");
+					return false;
+				}
+				else if(nScanRings < 2){
+					ROS_ERROR("Invalid number of scan rings(n < 2)");
+					return false;
+				}
+			}
+
+			_scanMapper.set(vAngleMin, vAngleMax, nScanRings);
+			ROS_INFO("Set scan mapper");
+		}
+
+		_subLaserCloud = node.subscribe<sensor_msgs::PointCloud2>
+			("/Velodyne_points", 2, &SemClassifer::pointcloud_callback, this);
+
+		return true;
 	}
+
+
 				
 }
