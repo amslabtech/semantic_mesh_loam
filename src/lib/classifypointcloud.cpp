@@ -149,6 +149,41 @@ namespace semloam{
 		return true;
 	}
 
+	void SemClassifer::pointcloud_callback(const sensor_msgs::PointCloud2ConstPtr &laserscan){
+
+		pcl::PointCloud<pcl::PointXYZRGB> laserCloudIn;
+		pcl::fromROSMsg( *laserscan, laserCloudIn);
+
+		unlabeled.clear();
+		outlier.clear();
+		car.clear();
+		bicycle.clear();
+		motorcycle.clear();
+		onrails.clear();
+		truck.clear();
+		othervehicle.clear();
+		person.clear();
+		bicyclist.clear();
+		motorcyclist.clear();
+		road.clear();
+		parking.clear();
+		sidewalk.clear();
+		otherground.clear();
+		building.clear();
+		fence.clear();
+		otherstructure.clear();
+		lanemarking.clear();
+		vegetation.clear();
+		trunk.clear();
+		terrain.clear();
+		pole.clear();
+		trafficsign.clear();
+
+
+		process(laserCloudIn, fromROSTime(laserscan->header.stamp));
+
+	}
+
 	bool SemClassifer::setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config){
 
 		if(!setParams(node, privateNode, config)){
@@ -207,6 +242,50 @@ namespace semloam{
 		return true;
 	}
 
+	void SemClassifer::classify(const pcl::PointXYZRGB& point, const int& color_id){
 
+		char id[8];
+		snprintf(id, 8, "%x", color_id);
+
+
+
+	}
+
+	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
+		size_t cloudsize = LaserCloudIn.size();
+
+		pcl::PointXYZRGB = point;
+
+		for(int i=0; i<cloudsize; i++){
+
+			point.x = laserCloudIn[i].x;
+			point.y = laserCloudIn[i].y;
+			point.z = laserCloudIn[i].z;
+
+			point.r = laserCloudIn[i].r;
+			point.g = laserCloudIn[i].g;
+			point.b = laserCloudIn[i].b;
+
+			//Convert color data to 0xrrggbb
+			int color_id = point.b*pow(16,0) + point.g*pow(16,2) + point.b*pow(16,4);
+
+			if(             !pcl_isfinite(point.x) ||
+					!pcl_isfinite(point.y) ||
+					!pcl_isfinite(point.z)){
+				continue;
+			}
+
+			if(point.x*point.x + point.y*point.y + point.z*point.z < 0.00001){
+				continue;
+			}
+
+			//classify point and contain to each each semantic points
+			classify(point, color_id);
+
+		}
+		
+		a;
+
+	}
 				
 }
