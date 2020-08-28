@@ -111,7 +111,7 @@ namespace semloam{
 
 			void process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime);
 
-			void classify(const pcl::PointXYZRGB& point, const int& color_id);
+			bool classify(const pcl::PointXYZRGB& point, const int& color_id);
 
 		private:
 

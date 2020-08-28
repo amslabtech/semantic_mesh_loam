@@ -242,14 +242,90 @@ namespace semloam{
 		return true;
 	}
 
-	void SemClassifer::classify(const pcl::PointXYZRGB& point, const int& color_id){
+	bool SemClassifer::classify(const pcl::PointXYZRGB& point, const int& color_id){
 
 		char id[8];
 		snprintf(id, 8, "%x", color_id);
 
+		if(id == "0x000000"){
+			unlabeled.push_back(point);
+		}
+		else if(id == "0xff0000"){
+			outlier.push_back(point);
+		}
+		else if(id == "0x6496f5"){
+			car.push_back(point);
+		}
+		else if(id == "0x64e6f5"){
+			bicycle.push_back(point);
+		}
+		else if(id == "0x6450fa"){
+			bus.push_back(point);
+		}
+		else if(id == "0x1e3c96"){
+			motorcycle.push_back(point);
+		}
+		else if(id == "0x0000ff"){
+			onrails.push_back(point);
+		}
+		else if(id == "501eb4"){
+			truck.push_back(point);
+		}
+		else if(id == "0xff1e1e"){
+			person.push_back(point);
+		}
+		else if(id == "0xff28c8"){
+			bicyclist.push_back(point);
+		}
+		else if(id == "0x961e5a"){
+			motorcyclist.push_back(point);
+		}
+		else if(id == "0xff00ff"){
+			road.push_back(point);
+		}
+		else if(id == "0xff96ff"){
+			parking.push_back(point);
+		}
+		else if(id == "0x4b004b"){
+			sidewalk.push_back(point);
+		}
+		else if(id == "0xaf004b"){
+			otherground.push_back(point);
+		}
+		else if(id == "0xffc800"){
+			building.push_back(point);
+		}
+		else if(id == "0xff7832"){
+			fence.push_back(point);
+		}
+		else if(id == "0xff9600"){
+			otherstructure.push_back(point);
+		}
+		else if(id == "96ffaa"){
+			lanemarking.push_back(point);
+		}
+		else if(id == "0x00af00"){
+			vegetation.push_back(point);
+		}
+		else if(id == "0x873c00"){
+			trunk.push_back(point);
+		}
+		else if(id == "0x96f050"){
+			terrain.push_back(point);
+		}
+		else if(id == "0xfff096"){
+			pole.push_back(point);
+		}
+		else if(id == "0xff0000"){
+			trafficsign.push_back(point);
+		}
+		else{
+			continue; //Remove moving object
+		}
 
-
+		return true;
 	}
+
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
 		size_t cloudsize = LaserCloudIn.size();
@@ -280,7 +356,9 @@ namespace semloam{
 			}
 
 			//classify point and contain to each each semantic points
-			classify(point, color_id);
+			if(!classify(point, color_id)){
+				continue;
+			}
 
 		}
 		
