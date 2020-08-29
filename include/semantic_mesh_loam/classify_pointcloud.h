@@ -2,7 +2,6 @@
 #define __CLASSIFY_POINTCLOUD_H
 
 #include"util.h"
-#include"ros/ros.h"
 #include"sensor_msgs/PointCloud2.h"
 #include"pcl/point_cloud.h"
 #include<stdint.h>
@@ -13,7 +12,8 @@
 #include"pcl_conversions/pcl_conversions.h"
 #include"pcl/segmentation/extract_clusters.h"
 #include"pcl/filters/extract_indices.h"
-#include"pcl/visualization/cloud_viewer.h"
+//#include"pcl/visualization/cloud_viewer.h"
+
 
 namespace semloam{
 
@@ -44,12 +44,13 @@ namespace semloam{
 			static inline MultiScanMapper Velodyne_VLP_16(){
 				return MultiScanMapper(-15, 15, 16);
 			}
-			static inline MultiScanMapper Velodyne_VLP_32(){
+			static inline MultiScanMapper Velodyne_HDL_32(){
 				return MultiScanMapper(-30.67f, 10.67f, 32);
 			}
-			static inline MultiScanMapper Velodyne_VLP_64E(){
+			static inline MultiScanMapper Velodyne_HDL_64E(){
 				return MultiScanMapper(-24.9f, 2, 64);
 			}
+
 
 		private:
 			float _lowerBound;
@@ -94,7 +95,7 @@ namespace semloam{
 	class SemClassifer{
 
 		public:
-			SemClassifer(const MultiScanMapper& scanMapper = MultiScanMapper());
+			SemClassifer();
 
 			bool setup(ros::NodeHandle& node, ros::NodeHandle& privateNode);
 
@@ -107,7 +108,7 @@ namespace semloam{
 
 			bool setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
 
-			bool configure(const TegistrationParams& config = RegistrationParams());
+			bool configure(const RegistrationParams& config = RegistrationParams());
 
 			void process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime);
 
@@ -125,34 +126,39 @@ namespace semloam{
 			ros::Publisher _pubCentroid;
 			ros::Publisher _pubEdge;
 
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> unlabeled;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> outlier;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> car;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> bicycle;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> bus;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> motorcycle;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> onrails;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> truck;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> othervehicle;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> person;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> bicyclist;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> motorcyclist;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> road;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> parking;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> sidewalk;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> otherground;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> building;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> fence;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> otherstructure;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> lanemarking;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> vegetation;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> trunk;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> terrain;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> pole;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>> trafficsign;
+			MultiScanMapper _scanMapper;
+
+			pcl::PointCloud<pcl::PointXYZRGB> unlabeled;
+			pcl::PointCloud<pcl::PointXYZRGB> outlier;
+			pcl::PointCloud<pcl::PointXYZRGB> car;
+			pcl::PointCloud<pcl::PointXYZRGB> bicycle;
+			pcl::PointCloud<pcl::PointXYZRGB> bus;
+			pcl::PointCloud<pcl::PointXYZRGB> motorcycle;
+			pcl::PointCloud<pcl::PointXYZRGB> onrails;
+			pcl::PointCloud<pcl::PointXYZRGB> truck;
+			pcl::PointCloud<pcl::PointXYZRGB> othervehicle;
+			pcl::PointCloud<pcl::PointXYZRGB> person;
+			pcl::PointCloud<pcl::PointXYZRGB> bicyclist;
+			pcl::PointCloud<pcl::PointXYZRGB> motorcyclist;
+			pcl::PointCloud<pcl::PointXYZRGB> road;
+			pcl::PointCloud<pcl::PointXYZRGB> parking;
+			pcl::PointCloud<pcl::PointXYZRGB> sidewalk;
+			pcl::PointCloud<pcl::PointXYZRGB> otherground;
+			pcl::PointCloud<pcl::PointXYZRGB> building;
+			pcl::PointCloud<pcl::PointXYZRGB> fence;
+			pcl::PointCloud<pcl::PointXYZRGB> otherstructure;
+			pcl::PointCloud<pcl::PointXYZRGB> lanemarking;
+			pcl::PointCloud<pcl::PointXYZRGB> vegetation;
+			pcl::PointCloud<pcl::PointXYZRGB> trunk;
+			pcl::PointCloud<pcl::PointXYZRGB> terrain;
+			pcl::PointCloud<pcl::PointXYZRGB> pole;
+			pcl::PointCloud<pcl::PointXYZRGB> trafficsign;
 
 	};
 
 
 
 }
+
+
+#endif

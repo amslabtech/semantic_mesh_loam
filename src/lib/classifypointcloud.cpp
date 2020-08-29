@@ -1,8 +1,24 @@
 #include"semantic_mesh_loam/classify_pointcloud.h"
 
-#include<pcl_conversions/pcl_conversions.h>
-
 namespace semloam{
+
+	RegistrationParams::RegistrationParams(const float& scanPeriod_,
+                                       const int& imuHistorySize_,
+                                       const int& nFeatureRegions_,
+                                       const int& curvatureRegion_,
+                                       const int& maxCornerSharp_,
+                                       const int& maxSurfaceFlat_,
+                                       const float& lessFlatFilterSize_,
+                                       const float& surfaceCurvatureThreshold_)
+    : scanperiod(scanPeriod_),
+      imuhistorysize(imuHistorySize_),
+      nfeatureregions(nFeatureRegions_),
+      curvatureregion(curvatureRegion_),
+      maxcornersharp(maxCornerSharp_),
+      lessflatfiltersize(lessFlatFilterSize_),
+      surfacecurvaturethreshold(surfaceCurvatureThreshold_)
+{};
+
 
 	MultiScanMapper::MultiScanMapper(const float& lowerBound, const float& upperBound, const uint16_t&nScanRings)
 		:_lowerBound(lowerBound),
@@ -70,7 +86,7 @@ namespace semloam{
 				success = false;
 			}
 			else{
-				config_out.curvatureregions = iParam;
+				config_out.curvatureregion = iParam;
 				ROS_INFO("Set curvatureregion %d", iParam);
 			}
 		}
@@ -133,8 +149,9 @@ namespace semloam{
 	}
 
 
-	SemClassifer::SemClassifer(const MultiScanMapper& scanMapper)
-		: _scanMapper(scanMapper){};
+	SemClassifer::SemClassifer(){
+		_scanMapper = MultiScanMapper();
+	}
 
 	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
 
@@ -200,7 +217,7 @@ namespace semloam{
 				_scanMapper = MultiScanMapper::Velodyne_HDL_32();
 			}
 			else if(lidarName == "HDL-64E"){
-				_scanMapper = MultiScanMapper::Velodyne_HDL64E();
+				_scanMapper = MultiScanMapper::Velodyne_HDL_64E();
 			}
 			else{
 				ROS_ERROR("Invalid lidar parameter");
@@ -222,7 +239,7 @@ namespace semloam{
 			if(             privateNode.getParam("maxVerticalAngle", vAngleMin) &&
 					privateNode.getParam("maxVerticalAngle", vAngleMax) &&
 					privateNode.getParam("nScanRings", nScanRings) ){
-				if(vAngleMIn >= vAngleMax ){
+				if(vAngleMin >= vAngleMax ){
 					ROS_ERROR("Invalid vertical range");
 					return false;
 				}
@@ -319,18 +336,16 @@ namespace semloam{
 		else if(id == "0xff0000"){
 			trafficsign.push_back(point);
 		}
-		else{
-			continue; //Remove moving object
-		}
+		
 
 		return true;
 	}
 
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
-		size_t cloudsize = LaserCloudIn.size();
+		size_t cloudsize = laserCloudIn.size();
 
-		pcl::PointXYZRGB = point;
+		pcl::PointXYZRGB point;
 
 		for(int i=0; i<cloudsize; i++){
 
@@ -362,7 +377,7 @@ namespace semloam{
 
 		}
 		
-		a;
+		//a;
 
 	}
 				
