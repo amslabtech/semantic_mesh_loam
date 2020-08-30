@@ -104,6 +104,8 @@ namespace semloam{
 			bool setParams(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
 			bool parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out);
 
+			void publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge);
+
 		private:
 
 			bool setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
@@ -127,6 +129,9 @@ namespace semloam{
 			ros::Publisher _pubEdge;
 
 			MultiScanMapper _scanMapper;
+
+			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
+			pcl::PointCLoud<pcl::PointXYZRGB> CloudEdge;
 
 			pcl::PointCloud<pcl::PointXYZRGB> unlabeled;
 			pcl::PointCloud<pcl::PointXYZRGB> outlier;

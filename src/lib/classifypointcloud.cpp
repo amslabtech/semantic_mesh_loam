@@ -171,32 +171,6 @@ namespace semloam{
 		pcl::PointCloud<pcl::PointXYZRGB> laserCloudIn;
 		pcl::fromROSMsg( *laserscan, laserCloudIn);
 
-		unlabeled.clear();
-		outlier.clear();
-		car.clear();
-		bicycle.clear();
-		motorcycle.clear();
-		onrails.clear();
-		truck.clear();
-		othervehicle.clear();
-		person.clear();
-		bicyclist.clear();
-		motorcyclist.clear();
-		road.clear();
-		parking.clear();
-		sidewalk.clear();
-		otherground.clear();
-		building.clear();
-		fence.clear();
-		otherstructure.clear();
-		lanemarking.clear();
-		vegetation.clear();
-		trunk.clear();
-		terrain.clear();
-		pole.clear();
-		trafficsign.clear();
-
-
 		process(laserCloudIn, fromROSTime(laserscan->header.stamp));
 
 	}
@@ -341,6 +315,19 @@ namespace semloam{
 		return true;
 	}
 
+	void SemClassifer::publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge){
+		sensor_msgs::PointCloud2 velo, cent, edge;
+
+		pcl::toROSMsg(*laserCloudIn, velo);
+		pcl::toROSMsg(*CloudCentroid, cent);
+		pcl::toROSMsg(*CloudEdge, edge);
+
+		_pubLaserCloud.publish(velo);
+		_pubCentroid.publish(cent);
+		_pubEdge.publish(edge);
+
+	}
+
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
 		size_t cloudsize = laserCloudIn.size();
@@ -377,7 +364,134 @@ namespace semloam{
 
 		}
 		
-		//a;
+		if(unlabeled.size() != 0){
+			extract_centroid(unlabeled);
+		}
+
+		if(outlier.size() !=0 ){
+			extract_centroid(outlier);
+		}
+
+		if(car.size() != 0 ){
+			extract_centroid(car);
+		}
+
+		if(bicycle.size() != 0){
+			extract_centroid(bicycle);
+		}
+
+		if(motorcycle.size() != 0 ){
+			extract_centroid(motorcycle);
+		}
+
+		if(onrails.size() != 0){
+			extract_centroid(onrails);
+		}
+
+		if(truck.size() != 0 ){
+			extract_centroid(truck);
+		}
+		
+		if(othervehicle.size() != 0 ){
+			extract_centroid(othervehicle);
+		}
+
+		if(person.size() != 0){
+			extract_centroid(othervehicle);
+		}
+
+		if(bicyclist.size() != 0){
+			extract_centroid(bicyclist);
+		}
+
+		if(motorcyclist.size() != 0){
+			extract_centroid(motorcyclist);
+		}
+
+		if(road.size() != 0){
+			extract_edge_point(road);
+		}
+
+		if(parking.size() != 0){
+			extract_edge_point(parking);
+		}
+
+		if(sidewalk.size() != 0){
+			extract_edge_point(sidewalk);
+		}
+
+		if(otherground.size() != 0){
+			extract_edge_point(sidewalk);
+		}
+
+		if(building.size() != 0){
+			extract_edge_point(building);
+		}
+
+		if(fence.size() != 0){
+			extract_centroid(fence);
+		}
+
+		if(otherstructure.size() != 0){
+			extract_edge_point(otherstructure);
+		}
+		
+		if(lanemarking.size() != 0){
+			extract_centroid(lanemarking);
+		}
+
+		if(vegetation.size() != 0){
+			extract_centroid(vegetation);
+		}
+
+		if(trunk.size() != 0){
+			extract_centroid(trunk);
+		}
+
+		if(terrain.size() != 0){
+			extract_centroid(terrain);
+		}
+
+		if(pole.size() != 0){
+			extract_centroid(pole);
+		}
+
+		if(trafficsign.size() != 0){
+			extract_centroid(trafficsign);
+		}
+
+		//convert pcl to ros pointcloud2 and publish pointcloud 
+		publish_pointcloud(laserCloudIn, CloudCentroid, CloudEdge);
+
+		//clear edge and centroid
+		CloudCentroid.clear();
+		CloudEdge.clear();
+
+		//clear semantic point cloud data
+		unlabeled.clear();
+		outlier.clear();
+		car.clear();
+		bicycle.clear();
+		motorcycle.clear();
+		onrails.clear();
+		truck.clear();
+		othervehicle.clear();
+		person.clear();
+		bicyclist.clear();
+		motorcyclist.clear();
+		road.clear();
+		parking.clear();
+		sidewalk.clear();
+		otherground.clear();
+		building.clear();
+		fence.clear();
+		otherstructure.clear();
+		lanemarking.clear();
+		vegetation.clear();
+		trunk.clear();
+		terrain.clear();
+		pole.clear();
+		trafficsign.clear();
 
 	}
 				
