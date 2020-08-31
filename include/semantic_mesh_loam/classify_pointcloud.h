@@ -17,6 +17,8 @@
 
 namespace semloam{
 
+
+
 	class MultiScanMapper{
 
 		public:
@@ -93,6 +95,17 @@ namespace semloam{
 	};
 
 	class SemClassifer{
+		
+		private:
+			//pcl::visualization::PCLVisualier viewer {"Euclidean Clustering"};
+			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+
+			double cluster_torelance;
+			int min_cluster_size;
+
+		public:
+			void Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud);
+			// void visualization();
 
 		public:
 			SemClassifer();
@@ -116,6 +129,10 @@ namespace semloam{
 
 			bool classify(const pcl::PointXYZRGB& point, const int& color_id);
 
+			void extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+
+			void extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+
 		private:
 
 			//RegistrationParams _config;
@@ -131,7 +148,7 @@ namespace semloam{
 			MultiScanMapper _scanMapper;
 
 			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
-			pcl::PointCLoud<pcl::PointXYZRGB> CloudEdge;
+			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
 
 			pcl::PointCloud<pcl::PointXYZRGB> unlabeled;
 			pcl::PointCloud<pcl::PointXYZRGB> outlier;

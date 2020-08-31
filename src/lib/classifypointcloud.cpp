@@ -151,6 +151,9 @@ namespace semloam{
 
 	SemClassifer::SemClassifer(){
 		_scanMapper = MultiScanMapper();
+		
+		cluster_torelance = 0.1;
+		min_cluster_size = 10;
 	}
 
 	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
@@ -318,9 +321,9 @@ namespace semloam{
 	void SemClassifer::publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge){
 		sensor_msgs::PointCloud2 velo, cent, edge;
 
-		pcl::toROSMsg(*laserCloudIn, velo);
-		pcl::toROSMsg(*CloudCentroid, cent);
-		pcl::toROSMsg(*CloudEdge, edge);
+		pcl::toROSMsg(laserCloudIn, velo);
+		pcl::toROSMsg(CloudCentroid, cent);
+		pcl::toROSMsg(CloudEdge, edge);
 
 		_pubLaserCloud.publish(velo);
 		_pubCentroid.publish(cent);
@@ -328,6 +331,100 @@ namespace semloam{
 
 	}
 
+	void SemClassifer::Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud){
+
+
+		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+		tree->setInputCloud(cloud);//Input searched pointcloud
+		std::vector<pcl::PointIndices> cluster_indices; //Vector tha contains clusterized index
+		pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ece;
+
+		ece.setClusterTolerance(cluster_torelance);
+		ece.setMinClusterSize(min_cluster_size);
+		ece.setMaxClusterSize(cloud->points.size());
+
+		ece.setSearchMethod(tree);
+		ece.setInputCloud(cloud);
+
+		ece.extract(cluster_indices);
+
+		// std::cout << clustering << std::endl;
+
+		pcl::ExtractIndices<pcl::PointXYZRGB> ei;
+		ei.setInputCloud(cloud);
+		ei.setNegative(false);
+
+		for(size_t i=0; i<cluster_indices.size(); i++){
+			//extract
+
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_clustered_points (new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointIndices::Ptr tmp_clustered_indices (new pcl::PointIndices);
+
+			*tmp_clustered_indices = cluster_indices[i];
+			ei.setIndices(tmp_clustered_indices);
+			ei.filter(*tmp_clustered_points);
+
+			/*Input*/
+			clusters.push_back(tmp_clustered_points);
+
+		}
+
+	}
+
+
+	void SemClassifer::extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+
+		clusters.clear();
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
+
+		Clustering(cloudin);
+
+
+
+
+	}
+
+
+	void SemClassifer::extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+		
+		clusters.clear();
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
+
+		Clustering(cloudin);
+
+		//Calculate centroid and add to CloudCentroid
+
+		for(size_t i=0; i<clusters.size(); i++){
+			
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster = clusters[i];
+
+			pcl::PointXYZRGB centroid;
+
+			float x = 0.0;
+			float y = 0.0;
+			float z = 0.0;
+
+			centroid.r = cluster->points[0].r;
+			centroid.g = cluster->points[0].g;
+			centroid.b = cluster->points[0].b;
+
+			for(size_t j=0; j < cluster->points.size(); j++){
+
+				x += cluster->points[j].x;
+				y += cluster->points[j].y;
+				z += cluster->points[j].z;
+			}
+			
+			//calcularate centroid
+			centroid.x = x/float(cluster->points.size());
+			centroid.y = y/float(cluster->points.size());
+			centroid.z = z/float(cluster->points.size());
+
+			CloudCentroid.push_back(centroid);
+
+		}
+	}
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
 		size_t cloudsize = laserCloudIn.size();
