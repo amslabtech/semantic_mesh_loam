@@ -12,6 +12,7 @@
 #include"pcl_conversions/pcl_conversions.h"
 #include"pcl/segmentation/extract_clusters.h"
 #include"pcl/filters/extract_indices.h"
+#include"pcl/features/normal_3d.h"
 //#include"pcl/visualization/cloud_viewer.h"
 
 
@@ -117,7 +118,7 @@ namespace semloam{
 			bool setParams(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
 			bool parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out);
 
-			void publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge);
+			void publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime);
 
 		private:
 
@@ -130,14 +131,23 @@ namespace semloam{
 			bool classify(const pcl::PointXYZRGB& point, const int& color_id);
 
 			void extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+			void calc_ave_point(void);
 
 			void extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+			void normal_edge_process(void);
+			void extract_edge_point_normal(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster, const pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
+
+			float searchradius;
+			float curvaturethreshold;
+
 
 		private:
 
 			//RegistrationParams _config;
 			//CircularBuffer<IMUstate> _imuhistory;
 			//CircularBuffer<Odomstate> _odomhistory;
+			//
+			int _systemDelay = 20;
 
 			ros::Subscriber _subLaserCloud;
 

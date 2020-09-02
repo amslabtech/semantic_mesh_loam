@@ -154,11 +154,16 @@ namespace semloam{
 		
 		cluster_torelance = 0.1;
 		min_cluster_size = 10;
+
+		searchradius = 0.3;//Radius used to calculate point normal tekitou
+		curvaturethreshold = 0.2; //tekitou 
 	}
 
 	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
 
 		RegistrationParams config;
+
+		std::cout << "setup" <<std::endl;
 
 		if(!setupROS(node, privateNode, config)){
 			return false;
@@ -171,15 +176,26 @@ namespace semloam{
 
 	void SemClassifer::pointcloud_callback(const sensor_msgs::PointCloud2ConstPtr &laserscan){
 
+		if(_systemDelay > 0){
+			--_systemDelay;
+			return;
+		}
+
+
 		pcl::PointCloud<pcl::PointXYZRGB> laserCloudIn;
 		pcl::fromROSMsg( *laserscan, laserCloudIn);
 
-		process(laserCloudIn, fromROSTime(laserscan->header.stamp));
+		std::cout << "laser" << std::endl;
+		//std::cout << laserCloudIn.points[0].x << std::endl;
+
+		//process(laserCloudIn, fromROSTime(laserscan->header.stamp));
+		process(laserCloudIn, laserscan->header.stamp);
 
 	}
 
 	bool SemClassifer::setupROS(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config){
 
+		std::cout << "setup ros" << std::endl;
 		if(!setParams(node, privateNode, config)){
 				return false;
 		}
@@ -229,101 +245,117 @@ namespace semloam{
 			_scanMapper.set(vAngleMin, vAngleMax, nScanRings);
 			ROS_INFO("Set scan mapper");
 		}
+		
+
+		std::cout << "param" <<std::endl;
 
 		_subLaserCloud = node.subscribe<sensor_msgs::PointCloud2>
-			("/Velodyne_points", 2, &SemClassifer::pointcloud_callback, this);
+			("/velodyne_points", 2, &SemClassifer::pointcloud_callback, this);
 
 		return true;
 	}
 
 	bool SemClassifer::classify(const pcl::PointXYZRGB& point, const int& color_id){
 
-		char id[8];
-		snprintf(id, 8, "%x", color_id);
+		/*char id[8];
+		snprintf(id, 8, "%x", color_id);*/
 
-		if(id == "0x000000"){
+		int id = color_id;
+
+		//std::cout << "%x" << id << std::endl;
+		if(id == std::stoi("0x000000", nullptr, 16)){
 			unlabeled.push_back(point);
 		}
-		else if(id == "0xff0000"){
+		else if(id == 0xff0000){
 			outlier.push_back(point);
 		}
-		else if(id == "0x6496f5"){
+		else if(id == std::stoi("0x6496f5", nullptr, 16)){
 			car.push_back(point);
+			std::cout << "car" << std::endl;
 		}
-		else if(id == "0x64e6f5"){
+		else if(id == 0x64e6f5){
 			bicycle.push_back(point);
 		}
-		else if(id == "0x6450fa"){
+		else if(id == 0x6450fa){
 			bus.push_back(point);
 		}
-		else if(id == "0x1e3c96"){
+		else if(id == 0x1e3c96){
 			motorcycle.push_back(point);
 		}
-		else if(id == "0x0000ff"){
+		else if(id == 0x0000ff){
 			onrails.push_back(point);
 		}
-		else if(id == "501eb4"){
+		else if(id == 0x501eb4){
 			truck.push_back(point);
 		}
-		else if(id == "0xff1e1e"){
+		else if(id == 0xff1e1e){
 			person.push_back(point);
 		}
-		else if(id == "0xff28c8"){
+		else if(id == 0xff28c8){
 			bicyclist.push_back(point);
 		}
-		else if(id == "0x961e5a"){
+		else if(id == 0x961e5a){
 			motorcyclist.push_back(point);
 		}
-		else if(id == "0xff00ff"){
+		else if(id == 0xff00ff){
 			road.push_back(point);
 		}
-		else if(id == "0xff96ff"){
+		else if(id == 0xff96ff){
 			parking.push_back(point);
 		}
-		else if(id == "0x4b004b"){
+		else if(id == 0x4b004b){
 			sidewalk.push_back(point);
 		}
-		else if(id == "0xaf004b"){
+		else if(id == 0xaf004b){
 			otherground.push_back(point);
 		}
-		else if(id == "0xffc800"){
+		else if(id == 0xffc800){
 			building.push_back(point);
 		}
-		else if(id == "0xff7832"){
+		else if(id == 0xff7832){
 			fence.push_back(point);
 		}
-		else if(id == "0xff9600"){
+		else if(id == 0xff9600){
 			otherstructure.push_back(point);
 		}
-		else if(id == "96ffaa"){
+		else if(id == 0x96ffaa){
 			lanemarking.push_back(point);
 		}
-		else if(id == "0x00af00"){
+		else if(id == 0x00af00){
 			vegetation.push_back(point);
 		}
-		else if(id == "0x873c00"){
+		else if(id == 0x873c00){
 			trunk.push_back(point);
 		}
-		else if(id == "0x96f050"){
+		else if(id == 0x96f050){
 			terrain.push_back(point);
 		}
-		else if(id == "0xfff096"){
+		else if(id == 0xfff096){
 			pole.push_back(point);
 		}
-		else if(id == "0xff0000"){
+		else if(id == 0xff0000){
 			trafficsign.push_back(point);
 		}
-		
 
+		//std::cout << "classify" << std::endl;
 		return true;
 	}
 
-	void SemClassifer::publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge){
+	void SemClassifer::publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime){
 		sensor_msgs::PointCloud2 velo, cent, edge;
 
 		pcl::toROSMsg(laserCloudIn, velo);
 		pcl::toROSMsg(CloudCentroid, cent);
 		pcl::toROSMsg(CloudEdge, edge);
+
+		velo.header.frame_id = "vehicle";
+		velo.header.stamp = scanTime;
+
+		cent.header.frame_id = "vehicle";
+		cent.header.stamp = scanTime;
+
+		edge.header.frame_id = "vehicle";
+		edge.header.stamp = scanTime;
 
 		_pubLaserCloud.publish(velo);
 		_pubCentroid.publish(cent);
@@ -371,6 +403,53 @@ namespace semloam{
 
 	}
 
+	void SemClassifer::extract_edge_point_normal(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster,const pcl::PointCloud<pcl::Normal>::Ptr cloud_normals){
+
+		for(size_t i=0; i < cloud_normals->points.size(); i++){
+
+			if(cloud_normals->points[i].curvature > curvaturethreshold){
+				pcl::PointXYZRGB edgepoint;
+
+				edgepoint.r = cluster->points[0].r;
+				edgepoint.g = cluster->points[0].g;
+				edgepoint.b = cluster->points[0].b;
+
+				edgepoint.x = cloud_normals->points[i].normal_x;
+				edgepoint.y = cloud_normals->points[i].normal_y;
+				edgepoint.z = cloud_normals->points[i].normal_z;
+				
+				CloudEdge.push_back(edgepoint);
+
+				std::cout << edgepoint.z << std::endl;
+			}
+		}
+	}
+
+
+
+
+	void SemClassifer::normal_edge_process(void){
+
+		//extracting edge each cluster
+		for(size_t i=0; i<clusters.size(); i++){
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster = clusters[i];
+
+			//Normals
+			pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
+			pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+
+			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+			tree->setInputCloud(cluster);
+			ne.setInputCloud(cluster);
+			ne.setSearchMethod(tree);
+
+			ne.setRadiusSearch(searchradius);
+			
+			ne.compute(*cloud_normals);
+
+			extract_edge_point_normal(cluster, cloud_normals);
+		}
+	}
 
 	void SemClassifer::extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
 
@@ -378,22 +457,11 @@ namespace semloam{
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
 		Clustering(cloudin);
-
-
-
-
+		normal_edge_process();
 	}
 
 
-	void SemClassifer::extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
-		
-		clusters.clear();
-
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
-
-		Clustering(cloudin);
-
-		//Calculate centroid and add to CloudCentroid
+	void SemClassifer::calc_ave_point(void){
 
 		for(size_t i=0; i<clusters.size(); i++){
 			
@@ -426,6 +494,18 @@ namespace semloam{
 		}
 	}
 
+	void SemClassifer::extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+		
+		clusters.clear();
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
+
+		Clustering(cloudin);
+
+		//Calculate centroid and add to CloudCentroid
+		calc_ave_point();
+	}
+
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
 		size_t cloudsize = laserCloudIn.size();
 
@@ -440,6 +520,8 @@ namespace semloam{
 			point.r = laserCloudIn[i].r;
 			point.g = laserCloudIn[i].g;
 			point.b = laserCloudIn[i].b;
+
+			//std::cout << int(point.b) << std::endl;
 
 			//Convert color data to 0xrrggbb
 			int color_id = point.b*pow(16,0) + point.g*pow(16,2) + point.b*pow(16,4);
@@ -456,12 +538,15 @@ namespace semloam{
 
 			//classify point and contain to each each semantic points
 			if(!classify(point, color_id)){
-				continue;
+				//continue;
 			}
 
 		}
+
+		std::cout<<"a"<<std::endl;
 		
 		if(unlabeled.size() != 0){
+			std::cout << "c" << std::endl;
 			extract_centroid(unlabeled);
 		}
 
@@ -556,9 +641,10 @@ namespace semloam{
 		if(trafficsign.size() != 0){
 			extract_centroid(trafficsign);
 		}
+		std::cout << "b" << std::endl;
 
 		//convert pcl to ros pointcloud2 and publish pointcloud 
-		publish_pointcloud(laserCloudIn, CloudCentroid, CloudEdge);
+		publish_pointcloud(laserCloudIn, CloudCentroid, CloudEdge, scanTime);
 
 		//clear edge and centroid
 		CloudCentroid.clear();
