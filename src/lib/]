@@ -516,12 +516,12 @@ namespace semloam{
 	}
 
 	void SemClassifer::extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
-		std::cout << "start clearing" << std::endl;
+		/*std::cout << "start clearing" << std::endl;
 		
-		//clusters.clear();
-		//clusters.resize(cluster_size);
+		clusters.clear();
+		clusters.resize(cluster_size);
 
-		std::cout << "cluster clear" << std::endl;
+		std::cout << "cluster clear" << std::endl;*/
 
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
@@ -541,8 +541,8 @@ namespace semloam{
 		std::cout << "pushed" << std::endl;
 
 		//kokokarahenkou
-		/*clusters.resize(cluster_size);
-		std::for_each(clusters.begin(), clusters.end(), [](pcl::PointCloud<pcl::PointXYZRGB>::Ptr v){v.clear(); });*/
+		clusters.resize(cluster_size);
+		std::for_each(clusters.begin(), clusters.end(), [](pcl::PointCloud<pcl::PointXYZRGB>::Ptr v){v.clear(); });
 	}
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
