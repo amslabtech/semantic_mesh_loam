@@ -461,20 +461,15 @@ namespace semloam{
 	}
 
 	void SemClassifer::extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
-		//std::cout << "start cluster" << std::endl;
-
-		//clusters.clear();
-
-		//std::copy(empty_vec.begin(), empty_vec.end(), clusters.begin());
-		//clusters = empty_vec;
-
 		std::cout << clusters.size() << std::endl;
 
-		//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
 		int cluster_number = Clustering(cloudin);
 		normal_edge_process(cluster_number);
+
+		//clusters.clear();
+		//umakuikanai
 	}
 
 
@@ -529,21 +524,15 @@ namespace semloam{
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
 		std::cout << clusters.size() << std::endl;
-		//std::cout << cloudin->points.size() << std::endl;
-		//std::cout << cloud.size() << std::endl;
-
-		//clusters.reserve(empty_vec.size());
-		//clusters = empty_vec;
-
-
-		//std::cout << "start clustering" << std::endl;
 
 		int cluster_number = Clustering(cloudin);
 
-		//std::cout << "end clustering" << cluster_number << std::endl;
-
 		//Calculate centroid and add to CloudCentroid
 		calc_ave_point(cluster_number);
+
+		//clusters.clear(); 
+		//umakuikanai
+		
 	}
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
