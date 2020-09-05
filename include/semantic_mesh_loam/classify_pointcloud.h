@@ -100,6 +100,7 @@ namespace semloam{
 		private:
 			//pcl::visualization::PCLVisualier viewer {"Euclidean Clustering"};
 			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> empty_vec;
 
 			double cluster_torelance;
 			int min_cluster_size;
