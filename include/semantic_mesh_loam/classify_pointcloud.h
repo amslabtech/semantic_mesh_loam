@@ -99,8 +99,8 @@ namespace semloam{
 		
 		private:
 			//pcl::visualization::PCLVisualier viewer {"Euclidean Clustering"};
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
-			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> empty_vec;
+			//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+			//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> empty_vec;
 
 			double cluster_torelance;
 			int min_cluster_size;
@@ -108,7 +108,7 @@ namespace semloam{
 			const size_t cluster_size = 100000;
 
 		public:
-			int Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud);
+			std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud);
 			// void visualization();
 
 		public:
@@ -134,10 +134,10 @@ namespace semloam{
 			bool classify(const pcl::PointXYZRGB& point, const color_data& color_id);
 
 			void extract_centroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
-			void calc_ave_point(int cluster_number);
+			void calc_ave_point(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& clusters);
 
 			void extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
-			void normal_edge_process(int cluster_number);
+			void normal_edge_process(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& clusters);
 			void extract_edge_point_normal(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster, const pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
 			float searchradius;
