@@ -174,7 +174,7 @@ namespace semloam{
 		sidewalk.reserve(pc_size_mid);
 		otherground.reserve(pc_size_mid);
 		building.reserve(pc_size_big);
-		fence.reserve(pc_size_min);
+		fence.reserve(pc_size_big);
 		otherstructure.reserve(pc_size_min);
 		lanemarking.reserve(pc_size_min);
 		vegetation.reserve(pc_size_mid);
@@ -694,11 +694,11 @@ namespace semloam{
 		}
 
 		if(fence.size() != 0){
-			extract_centroid(fence);
+			extract_edge_point(fence);
 		}
 
 		if(otherstructure.size() != 0){
-			extract_edge_point(otherstructure);
+			//extract_edge_point(otherstructure);
 		}
 		
 		if(lanemarking.size() != 0){
@@ -706,7 +706,7 @@ namespace semloam{
 		}
 
 		if(vegetation.size() != 0){
-			extract_centroid(vegetation);
+			//extract_centroid(vegetation);
 		}
 
 		if(trunk.size() != 0){
@@ -734,8 +734,8 @@ namespace semloam{
 		CloudEdge.clear();
 
 		//clear semantic point cloud data
-		//unlabeled.clear();
-		//outlier.clear();
+		unlabeled.clear();
+		outlier.clear();
 		car.clear();
 		bicycle.clear();
 		motorcycle.clear();
@@ -745,16 +745,16 @@ namespace semloam{
 		person.clear();
 		bicyclist.clear();
 		motorcyclist.clear();
-		//road.clear();
-		//parking.clear();
-		//sidewalk.clear();
-		//otherground.clear();
+		road.clear();
+		parking.clear();
+		sidewalk.clear();
+		otherground.clear();
 		building.clear();
 		fence.clear();
 		otherstructure.clear();
 		lanemarking.clear();
 		vegetation.clear();
-		//trunk.clear();
+		trunk.clear();
 		terrain.clear();
 		pole.clear();
 		trafficsign.clear();
