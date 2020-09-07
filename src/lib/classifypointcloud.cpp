@@ -152,14 +152,43 @@ namespace semloam{
 	SemClassifer::SemClassifer(){
 		_scanMapper = MultiScanMapper();
 		
-		cluster_torelance = 0.1;
-		min_cluster_size = 10;
+		cluster_torelance = 0.5; //When point distance is over 0.5, consider it other cluster
+		min_cluster_size = 40;
 
-		//clusters.reserve(cluster_size);
-		//empty_vec.reserve(clusters.size());
+		clusters.reserve(cluster_size);
+		empty_vec.reserve(clusters.size());
 
-		searchradius = 0.3;//Radius used to calculate point normal tekitou
-		curvaturethreshold = 0.2; //tekitou 
+		unlabeled.reserve(pc_size_min);
+		outlier.reserve(pc_size_min);
+		car.reserve(pc_size_mid);
+		bicycle.reserve(pc_size_min);
+		motorcycle.reserve(pc_size_min);
+		onrails.reserve(pc_size_min);
+		truck.reserve(pc_size_mid);
+		othervehicle.reserve(pc_size_mid);
+		person.reserve(pc_size_min);
+		bicyclist.reserve(pc_size_min);
+		motorcyclist.reserve(pc_size_min);
+		road.reserve(pc_size_big);
+		parking.reserve(pc_size_mid);
+		sidewalk.reserve(pc_size_mid);
+		otherground.reserve(pc_size_mid);
+		building.reserve(pc_size_big);
+		fence.reserve(pc_size_min);
+		otherstructure.reserve(pc_size_min);
+		lanemarking.reserve(pc_size_min);
+		vegetation.reserve(pc_size_mid);
+		trunk.reserve(pc_size_min);
+		terrain.reserve(pc_size_mid);;
+		pole.reserve(pc_size_min);
+		trafficsign.reserve(pc_size_min);
+
+		CloudCentroid.reserve(pc_size_min);
+		CloudEdge.reserve(pc_size_min);
+
+
+		searchradius = 0.2;//Radius used to calculate point normal tekitou
+		curvaturethreshold = 0.15; //tekitou 
 	}
 
 	bool SemClassifer::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
@@ -361,7 +390,7 @@ namespace semloam{
 
 	}
 
-	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> SemClassifer::Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud){
+	int SemClassifer::Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud){
 
 
 		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
@@ -391,7 +420,7 @@ namespace semloam{
 
 		int ac_number = 0;
 
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+		//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 
 		for(size_t i=0; i<cluster_indices.size(); i++){
 			//extract
@@ -416,7 +445,7 @@ namespace semloam{
 		}
 
 		//return ac_number;
-		return clusters;
+		return ac_number;
 
 	}
 
@@ -431,10 +460,16 @@ namespace semloam{
 				edgepoint.g = cluster->points[0].g;
 				edgepoint.b = cluster->points[0].b;
 
+				/*
 				edgepoint.x = cloud_normals->points[i].normal_x;
 				edgepoint.y = cloud_normals->points[i].normal_y;
 				edgepoint.z = cloud_normals->points[i].normal_z;
+				*/
 				
+				edgepoint.x = cluster->points[i].x;
+				edgepoint.y = cluster->points[i].y;
+				edgepoint.z = cluster->points[i].z;
+			
 				CloudEdge.push_back(edgepoint);
 
 				//std::cout << edgepoint.z << std::endl;
@@ -445,10 +480,10 @@ namespace semloam{
 
 
 
-	void SemClassifer::normal_edge_process(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& clusters){
+	void SemClassifer::normal_edge_process(int cluster_num){
 
 		//extracting edge each cluster
-		for(int i=0; i<clusters.size(); i++){
+		for(int i=0; i<cluster_num; i++){
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster = clusters[i];
 
 			//Normals
@@ -469,23 +504,25 @@ namespace semloam{
 	}
 
 	void SemClassifer::extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+		//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
-		clusters = Clustering(cloudin);
-		if(clusters.size() > 0){
-			normal_edge_process(clusters);
-			std::cout << clusters.size() << std::endl;
+		int cluster_num = Clustering(cloudin);
+		if(cluster_num > 0){
+			normal_edge_process(cluster_num);
+			//std::cout << clusters.size() << std::endl;
 		}
+
+		clusters = empty_vec;
 	}
 
 
-	void SemClassifer::calc_ave_point(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& clusters){
+	void SemClassifer::calc_ave_point(int cluster_num){
 
 		//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>::iterator itr;
 
-		for(int i=0; i < clusters.size(); i++){
+		for(int i=0; i < cluster_num; i++){
 
 			//std::cout << "avasgda" << std::endl;
 			
@@ -531,15 +568,17 @@ namespace semloam{
 
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin(new pcl::PointCloud<pcl::PointXYZRGB>(cloud));
 
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+		//std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 
-		clusters = Clustering(cloudin);
+		int cluster_num = Clustering(cloudin);
 
 		//Calculate centroid and add to CloudCentroid
-		if(clusters.size() > 0){
-			calc_ave_point(clusters);
-			std::cout <<clusters.size() << std::endl;
+		if(cluster_num > 0){
+			calc_ave_point(cluster_num);
+			//std::cout <<clusters.size() << std::endl;
 		}
+
+		clusters = empty_vec;
 		
 	}
 
@@ -584,20 +623,20 @@ namespace semloam{
 
 		}
 
-		std::cout<<"a"<<std::endl;
+		//std::cout<<"a"<<std::endl;
 		
 		if(unlabeled.size() != 0){
-			std::cout << "unlabeled" << unlabeled.size() <<std::endl;
+			//std::cout << "unlabeled" << unlabeled.size() <<std::endl;
 			extract_centroid(unlabeled);
 		}
 
 		if(outlier.size() !=0 ){
-			std::cout <<"outlier" << std::endl;
+			//std::cout <<"outlier" << std::endl;
 			extract_centroid(outlier);
 		}
 
 		if(car.size() != 0 ){
-			std::cout << "car" << std::endl;
+			//std::cout << "car" << std::endl;
 			extract_centroid(car);
 		}
 
@@ -634,7 +673,7 @@ namespace semloam{
 		}
 
 		if(road.size() != 0){
-			std::cout << "road" << std::endl;
+			//std::cout << "road" << std::endl;
 			extract_edge_point(road);
 		}
 
@@ -685,7 +724,7 @@ namespace semloam{
 		if(trafficsign.size() != 0){
 			extract_centroid(trafficsign);
 		}
-		std::cout << "b" << std::endl;
+		//std::cout << "b" << std::endl;
 
 		//convert pcl to ros pointcloud2 and publish pointcloud 
 		publish_pointcloud(laserCloudIn, CloudCentroid, CloudEdge, scanTime);

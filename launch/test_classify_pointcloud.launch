@@ -1,7 +1,5 @@
 <launch>
 
-	<arg name="rviz" default="true"/>
-
 	<node pkg="semantic_mesh_loam" type="classify_pointcloud" name="classify_pointcloud" output="screen">
 		<param name="lidar" value="HDL-64E" />
 	</node>
