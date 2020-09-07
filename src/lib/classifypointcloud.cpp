@@ -217,7 +217,7 @@ namespace semloam{
 		pcl::PointCloud<pcl::PointXYZRGB> laserCloudIn;
 		pcl::fromROSMsg( *laserscan, laserCloudIn);
 
-		std::cout << "laser" << std::endl;
+		//std::cout << "laser" << std::endl;
 		//std::cout << laserCloudIn.points[0].x << std::endl;
 
 		//process(laserCloudIn, fromROSTime(laserscan->header.stamp));
@@ -627,12 +627,12 @@ namespace semloam{
 		
 		if(unlabeled.size() != 0){
 			//std::cout << "unlabeled" << unlabeled.size() <<std::endl;
-			extract_centroid(unlabeled);
+			//extract_centroid(unlabeled);
 		}
 
 		if(outlier.size() !=0 ){
 			//std::cout <<"outlier" << std::endl;
-			extract_centroid(outlier);
+			//extract_centroid(outlier);
 		}
 
 		if(car.size() != 0 ){
@@ -661,7 +661,7 @@ namespace semloam{
 		}
 
 		if(person.size() != 0){
-			extract_centroid(othervehicle);
+			extract_centroid(person);
 		}
 
 		if(bicyclist.size() != 0){
@@ -674,19 +674,19 @@ namespace semloam{
 
 		if(road.size() != 0){
 			//std::cout << "road" << std::endl;
-			extract_edge_point(road);
+			//extract_edge_point(road);
 		}
 
 		if(parking.size() != 0){
-			extract_edge_point(parking);
+			//extract_edge_point(parking);
 		}
 
 		if(sidewalk.size() != 0){
-			extract_edge_point(sidewalk);
+			//extract_edge_point(sidewalk);
 		}
 
 		if(otherground.size() != 0){
-			extract_edge_point(sidewalk);
+			//extract_edge_point(otherground);
 		}
 
 		if(building.size() != 0){
@@ -710,7 +710,7 @@ namespace semloam{
 		}
 
 		if(trunk.size() != 0){
-			extract_centroid(trunk);
+			//extract_centroid(trunk);
 		}
 
 		if(terrain.size() != 0){
@@ -734,8 +734,8 @@ namespace semloam{
 		CloudEdge.clear();
 
 		//clear semantic point cloud data
-		unlabeled.clear();
-		outlier.clear();
+		//unlabeled.clear();
+		//outlier.clear();
 		car.clear();
 		bicycle.clear();
 		motorcycle.clear();
@@ -745,16 +745,16 @@ namespace semloam{
 		person.clear();
 		bicyclist.clear();
 		motorcyclist.clear();
-		road.clear();
-		parking.clear();
-		sidewalk.clear();
-		otherground.clear();
+		//road.clear();
+		//parking.clear();
+		//sidewalk.clear();
+		//otherground.clear();
 		building.clear();
 		fence.clear();
 		otherstructure.clear();
 		lanemarking.clear();
 		vegetation.clear();
-		trunk.clear();
+		//trunk.clear();
 		terrain.clear();
 		pole.clear();
 		trafficsign.clear();
