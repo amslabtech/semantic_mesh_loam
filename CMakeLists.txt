@@ -37,6 +37,9 @@ add_subdirectory(src/lib)
 add_executable(classify_pointcloud src/classify_pointcloud.cpp)
 target_link_libraries(classify_pointcloud ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
 
+add_executable(laser_odometry src/laser_odometry.cpp)
+target_link_libraries(laser_odometry ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
+
 
 
 #endif()

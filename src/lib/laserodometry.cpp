@@ -92,9 +92,72 @@ namespace semloam{
 		return true;
 	}
 
+	void LaserOdometry::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& clouddata){
+		velo_scans_time = clouddata->header.stamp;
+		
+		pcl::fromROSMsg(*clouddata, velo_scans);
+
+		std::cout << "velo data catched" << std::endl;
+
+		velo_scans_checker = true;
+	}
+
+	void LaserOdometry::centroid_callback(const sensor_msgs::PointCloud2ConstPtr& centroiddata){
+		CloudCentroid_time = centroiddata->header.stamp;
+
+		pcl::fromROSMsg(*centroiddata, CloudCentroid);
+
+		std::cout << "catch centroid data" << std::endl;
+
+		CloudCentroid_checker = true;
+	}
+
+	void LaserOdometry::edge_callback(const sensor_msgs::PointCloud2ConstPtr& edgedata){
+		CloudEdge_time = edgedata->header.stamp;
+
+		pcl::fromROSMsg(*edgedata, CloudEdge);
+
+		std::cout << "catch edge data" << std::endl;
+
+		CloudEdge_checker = true;
+	}
+
+	void LaserOdometry::odometry_callback(const nav_msgs::OdometryConstPtr& odomdata){
+		odom_data_time = odomdata->header.stamp;
+
+		odom_data = *odomdata;
+
+		std::cout << "catch odom data" << std::endl;
+
+		odom_data_checker = true;
+	}
+
 	void LaserOdometry::spin(){
 
-		//korekara
+		ros::Rate rate(100);
+
+		while( ros::ok() ){
+
+			ros::spinOnce(); //get published data
+
+			if(scancount == 0){
+				get_init_data();
+			}
+			else{
+				get_cur_data();
+
+				process();
+			}
+
+			if(scancount + 1 > 10000000){
+				scancount = scancount;
+			}
+			else{
+				scancount += 1;
+			}
+
+			rate.sleep();
+		}
 
 	}
 

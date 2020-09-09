@@ -13,10 +13,27 @@
 #include"pcl/point_types.h"
 #include"tf/transform_broadcaster.h"
 #include"tf/transform_listener.h"
+#include"geometry_msgs/Pose.h"
 
 namespace semloam{
 
 	class LaserOdometry{
+		public:
+			class ScanData{
+				public:
+					ScanData();
+
+					pcl::PointCloud<pcl::PointXYZRGB> cloud(150000);
+
+					pcl::PointCloud<pcl::PointXYZRGB> centroids(5000);
+
+					pcl::PointCloud<pcl::PointXYZRGB> edges(5000);
+
+					nav_msgs::Odometry odom_data;
+
+					geometry_msgs::Pose center; //place of vehicle
+					Time scantime;
+			};
 
 		public:
 			LaserOdometry();
@@ -34,6 +51,11 @@ namespace semloam{
 			void odometry_callback(const nav_msgs::OdometryConstPtr& odomdata);
 
 		private:
+			int scancount = 0;
+
+			ScanData refdata;
+			ScanData curdata;
+
 			float scanperiod;
 			uint16_t ioratio;
 			long framecount;
@@ -44,11 +66,24 @@ namespace semloam{
 			float delta_r_abort; //optimization abort threshold for delta R
 
 			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
+			Time velo_scans_time;
+			bool velo_scans_checker = false;
 			const size_t scan_size = 150000;
 
+
 			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
+			Time CloudCentroid_time;
+			bool CloudCentroid_checker = false;
+
 			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
+			Time CloudEdge_time;
+			bool CloudEdge_checker = false;
+
 			const size_t feature_size = 5000;
+
+			nav_msgs::Odometry odom_data;
+			Time odom_data_time;
+			bool odom_data_checker = false;
 
 			ros::Publisher _pubLaserOdomToInit;
 			ros::Publisher _pubCentroidPointLast;

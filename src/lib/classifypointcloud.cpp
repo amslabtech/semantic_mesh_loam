@@ -706,7 +706,7 @@ namespace semloam{
 		}
 
 		if(vegetation.size() != 0){
-			//extract_centroid(vegetation);
+			extract_centroid(vegetation);
 		}
 
 		if(trunk.size() != 0){
