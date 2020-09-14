@@ -375,13 +375,13 @@ namespace semloam{
 		pcl::toROSMsg(CloudCentroid, cent);
 		pcl::toROSMsg(CloudEdge, edge);
 
-		velo.header.frame_id = "vehicle";
+		velo.header.frame_id = "velodyne";
 		velo.header.stamp = scanTime;
 
-		cent.header.frame_id = "vehicle";
+		cent.header.frame_id = "velodyne";
 		cent.header.stamp = scanTime;
 
-		edge.header.frame_id = "vehicle";
+		edge.header.frame_id = "velodyne";
 		edge.header.stamp = scanTime;
 
 		_pubLaserCloud.publish(velo);

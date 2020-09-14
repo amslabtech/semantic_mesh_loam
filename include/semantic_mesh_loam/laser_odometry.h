@@ -7,6 +7,7 @@
 #include"util.h"
 
 #include"ros/node_handle.h"
+#include"pcl_ros/transforms.h"
 #include"sensor_msgs/PointCloud2.h"
 #include"nav_msgs/Odometry.h"
 #include"pcl/point_cloud.h"
@@ -14,6 +15,8 @@
 #include"tf/transform_broadcaster.h"
 #include"tf/transform_listener.h"
 #include"geometry_msgs/Pose.h"
+#include"pcl_conversions/pcl_conversions.h"
+#include"pcl/segmentation/extract_clusters.h"
 
 namespace semloam{
 
@@ -35,6 +38,14 @@ namespace semloam{
 
 			void process();
 
+			bool hasNewData();
+
+			void get_tf_data();
+
+			void convert_coordinate_of_pc();
+
+			//void init_pc_slide();
+
 		private:
 			int scancount = 0;
 			float scanperiod;
@@ -46,17 +57,17 @@ namespace semloam{
 			float delta_t_abort; //optimization abort threshold for delta T
 			float delta_r_abort; //optimization abort threshold for delta R
 
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr velo_scans;
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudCentroid;
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudEdge;
+			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
+			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
+			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
 
 			//Contain last scan's feature points data
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastCloudCentroid;
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastCloudEdge;
+			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
+			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
 
 			//KdTree
-			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudCentroidTree;
-			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudEdgeTree;
+			//pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudCentroidTree;
+			//pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudEdgeTree;
 
 			//Contain Centroid index
 			std::vector<int> CloudCentroidInd;
@@ -70,12 +81,17 @@ namespace semloam{
 			nav_msgs::Odometry _last_odom_data; //It may be unneccesary
 
 			nav_msgs::Odometry laserodometry; //Calibrated odometry data
+			
 			tf::StampedTransform laserodometrytrans;
+			tf::StampedTransform velo_to_map;
 
 			Time velo_scans_time;
 			Time CloudCentroid_time;
 			Time CloudEdge_time;
 			Time odom_data_time;
+
+			Time _last_CloudEdge_time;
+			Time _last_CloudCentroid_time;
 
 			bool velo_scans_checker = false;
 			bool CloudCentroid_checker = false;
@@ -95,6 +111,8 @@ namespace semloam{
 			ros::Subscriber _subEdge;
 			ros::Subscriber _subVelodynePoints;
 			ros::Subscriber _subOdometry;
+
+			tf::TransformListener listener;
 
 	};
 
