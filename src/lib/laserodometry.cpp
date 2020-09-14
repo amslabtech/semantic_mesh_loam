@@ -15,6 +15,26 @@ namespace semloam{
 		CloudCentroid.reserve(feature_size);
 		CloudEdge.reserve(feature_size);
 
+		CloudCentroidInd.reserve(ind_size);
+		_lastCloudCentroidInd.reserve(ind_size);
+
+		CloudEdgeInd.reserve(ind_size);
+		_lastCloudEdgeInd.reserve(ind_size);
+
+		odom_data.header.frame_id = "map";
+		odom_data.child_frame_id = "vehicle";
+
+		_last_odom_data.header.frame_id = "map";
+		_last_odom_data.child_frame_id = "vehicle";
+
+		laserodometry.header.frame_id = "map";
+		laserodometry.child_frame_id = "vehicle";
+
+		laserodometrytrans.header.frame_id = "map";
+		laserodometrytrans.child_frame_id = "vehicle";
+
+		system_initialized_checker = false;
+
 	}
 
 	bool LaserOdometry::setup(ros::NodeHandle &node, ros::NodeHandle &privateNode){
@@ -95,7 +115,7 @@ namespace semloam{
 	void LaserOdometry::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& clouddata){
 		velo_scans_time = clouddata->header.stamp;
 		
-		pcl::fromROSMsg(*clouddata, velo_scans);
+		pcl::fromROSMsg(*clouddata, *velo_scans);
 
 		std::cout << "velo data catched" << std::endl;
 
@@ -105,7 +125,7 @@ namespace semloam{
 	void LaserOdometry::centroid_callback(const sensor_msgs::PointCloud2ConstPtr& centroiddata){
 		CloudCentroid_time = centroiddata->header.stamp;
 
-		pcl::fromROSMsg(*centroiddata, CloudCentroid);
+		pcl::fromROSMsg(*centroiddata, *CloudCentroid);
 
 		std::cout << "catch centroid data" << std::endl;
 
@@ -115,7 +135,7 @@ namespace semloam{
 	void LaserOdometry::edge_callback(const sensor_msgs::PointCloud2ConstPtr& edgedata){
 		CloudEdge_time = edgedata->header.stamp;
 
-		pcl::fromROSMsg(*edgedata, CloudEdge);
+		pcl::fromROSMsg(*edgedata, *CloudEdge);
 
 		std::cout << "catch edge data" << std::endl;
 
@@ -132,29 +152,33 @@ namespace semloam{
 		odom_data_checker = true;
 	}
 
+	void LaserOdometry::process(){
+
+		if(!system_initialized_checker){
+
+			CloudCentroid.swap(_lastCloudCentroid);
+			CloudEdge.swap(_lastCloudEdge);
+
+			_lastCloudCentroidTree->setInputCloud( _lastCloudCentroid );
+			_lastCloudEdgeTree->setInputCloud( _lastCloudEdge );
+
+			system_initialized_checker = true;
+			return;
+		}
+
+	}
+
 	void LaserOdometry::spin(){
 
 		ros::Rate rate(100);
+
+		rate.sleep();
 
 		while( ros::ok() ){
 
 			ros::spinOnce(); //get published data
 
-			if(scancount == 0){
-				get_init_data();
-			}
-			else{
-				get_cur_data();
-
-				process();
-			}
-
-			if(scancount + 1 > 10000000){
-				scancount = scancount;
-			}
-			else{
-				scancount += 1;
-			}
+			process();
 
 			rate.sleep();
 		}

@@ -19,23 +19,6 @@ namespace semloam{
 
 	class LaserOdometry{
 		public:
-			class ScanData{
-				public:
-					ScanData();
-
-					pcl::PointCloud<pcl::PointXYZRGB> cloud(150000);
-
-					pcl::PointCloud<pcl::PointXYZRGB> centroids(5000);
-
-					pcl::PointCloud<pcl::PointXYZRGB> edges(5000);
-
-					nav_msgs::Odometry odom_data;
-
-					geometry_msgs::Pose center; //place of vehicle
-					Time scantime;
-			};
-
-		public:
 			LaserOdometry();
 			
 			bool setup(ros::NodeHandle& node, ros::NodeHandle& privateNode);
@@ -50,12 +33,10 @@ namespace semloam{
 
 			void odometry_callback(const nav_msgs::OdometryConstPtr& odomdata);
 
+			void process();
+
 		private:
 			int scancount = 0;
-
-			ScanData refdata;
-			ScanData curdata;
-
 			float scanperiod;
 			uint16_t ioratio;
 			long framecount;
@@ -65,25 +46,45 @@ namespace semloam{
 			float delta_t_abort; //optimization abort threshold for delta T
 			float delta_r_abort; //optimization abort threshold for delta R
 
-			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr velo_scans;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudCentroid;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudEdge;
+
+			//Contain last scan's feature points data
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastCloudCentroid;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastCloudEdge;
+
+			//KdTree
+			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudCentroidTree;
+			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudEdgeTree;
+
+			//Contain Centroid index
+			std::vector<int> CloudCentroidInd;
+			std::vector<int> _lastCloudCentroidInd;
+
+			//Contain Edge index
+			std::vector<int> CloudEdgeInd;
+			std::vector<int> _lastCloudEdgeInd;
+
+			nav_msgs::Odometry odom_data; //Contain current odometry data
+			nav_msgs::Odometry _last_odom_data; //It may be unneccesary
+
+			nav_msgs::Odometry laserodometry; //Calibrated odometry data
+			tf::StampedTransform laserodometrytrans;
+
 			Time velo_scans_time;
-			bool velo_scans_checker = false;
-			const size_t scan_size = 150000;
-
-
-			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
 			Time CloudCentroid_time;
-			bool CloudCentroid_checker = false;
-
-			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
 			Time CloudEdge_time;
-			bool CloudEdge_checker = false;
-
-			const size_t feature_size = 5000;
-
-			nav_msgs::Odometry odom_data;
 			Time odom_data_time;
+
+			bool velo_scans_checker = false;
+			bool CloudCentroid_checker = false;
+			bool CloudEdge_checker = false;
 			bool odom_data_checker = false;
+
+			const size_t scan_size = 150000;
+			const size_t feature_size = 10000;
+			const size_t ind_size = 5000;
 
 			ros::Publisher _pubLaserOdomToInit;
 			ros::Publisher _pubCentroidPointLast;
