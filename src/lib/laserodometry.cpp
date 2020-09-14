@@ -184,20 +184,33 @@ namespace semloam{
 		return checker_in;
 	}
 
-	/*
-
 	void LaserOdometry::init_pc_slide(){
 		tf::Quaternion pose_now;
 		tf::Quaternion pose_last;
 
 		quaternionMsgToTF(odom_data.pose.pose.orientation, pose_now);
-		quaternionMsgToTF( _last_odom_data.pose.pose.orientaion, pose_last);
+		quaternionMsgToTF( _last_odom_data.pose.pose.orientation, pose_last);
 
 		tf::Quaternion relative_rotation = pose_last * pose_now.inverse();
 		relative_rotation.normalize();
 
+		Eigen::Quaternionf rotation(relative_rotation.w(), relative_rotation.x(), relative_rotation.y(), relative_rotation.z() );
+
+		tf::Quaternion q_global_move(
+
+				_last_odom_data.pose.pose.position.x - odom_data.pose.pose.position.x,
+				_last_odom_data.pose.pose.position.y - odom_data.pose.pose.position.y,
+				_last_odom_data.pose.pose.position.z - odom_data.pose.pose.position.z,
+				0.0 );
+		
+		tf::Quaternion q_local_move = pose_last.inverse() * q_global_move * pose_last;
+		Eigen::Vector3f offset( q_local_move.x(), q_local_move.y(), q_local_move.z() );
+
+		// transform previous scans
+		pcl::transformPointCloud( _lastCloudCentroid, _lastCloudCentroid, offset, rotation );
+		pcl::transformPointCloud( _lastCloudEdge, _lastCloudEdge, offset, rotation );
+
 	}
-	*/
 
 	void LaserOdometry::get_tf_data(){
 
@@ -258,9 +271,11 @@ namespace semloam{
 
 		get_tf_data();
 
+		// Convert point cloud's coordinate velodyne to map
 		convert_coordinate_of_pc();
 
-		//init_pc_slide();
+		// slide point cloud position
+		init_pc_slide();
 
 	}
 

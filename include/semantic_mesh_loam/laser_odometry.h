@@ -44,7 +44,7 @@ namespace semloam{
 
 			void convert_coordinate_of_pc();
 
-			//void init_pc_slide();
+			void init_pc_slide();
 
 		private:
 			int scancount = 0;
