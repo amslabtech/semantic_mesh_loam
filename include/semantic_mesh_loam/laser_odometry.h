@@ -60,10 +60,12 @@ namespace semloam{
 			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
 			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
 			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
+			pcl::PointCloud<pcl::PointXYZRGB> FeatureCloud;
 
 			//Contain last scan's feature points data
 			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
 			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
+			pcl::PointCloud<pcl::PointXYZRGB> _lastFeatureCloud;
 
 			//KdTree
 			//pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudCentroidTree;

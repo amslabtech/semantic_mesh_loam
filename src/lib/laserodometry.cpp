@@ -15,9 +15,11 @@ namespace semloam{
 		velo_scans.reserve(scan_size);
 		CloudCentroid.reserve(feature_size);
 		CloudEdge.reserve(feature_size);
+		FeatureCloud.reserve(feature_size);
 		
 		_lastCloudCentroid.reserve(feature_size);
 		_lastCloudEdge.reserve(feature_size);
+		_lastFeatureCloud.reserve(feature_size);
 
 		CloudCentroidInd.reserve(ind_size);
 		_lastCloudCentroidInd.reserve(ind_size);
@@ -212,6 +214,8 @@ namespace semloam{
 
 	}
 
+	//void LaserOdometry::init_pc_slide();
+
 	void LaserOdometry::get_tf_data(){
 
 		while(true){
@@ -271,7 +275,7 @@ namespace semloam{
 
 		get_tf_data();
 
-		// Convert point cloud's coordinate velodyne to map
+		// Convert point cloud's coordinate velodyne frame to map frame
 		convert_coordinate_of_pc();
 
 		// slide point cloud position
