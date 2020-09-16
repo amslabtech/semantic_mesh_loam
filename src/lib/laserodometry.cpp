@@ -34,11 +34,11 @@ namespace semloam{
 		_last_odom_data.child_frame_id = "vehicle";
 
 		laserodometry.header.frame_id = "map";
-		laserodometry.child_frame_id = "vehicle";
+		laserodometry.child_frame_id = "laserodometry";
 
 		/*
-		laserodometrytrans.header.frame_id = "map";
-		laserodometrytrans.child_frame_id = "vehicle";
+		odometrytrans.header.frame_id = "map";
+		odometrytrans.child_frame_id = "vehicle";
 		*/
 
 		system_initialized_checker = false;
@@ -151,6 +151,9 @@ namespace semloam{
 	}
 
 	void LaserOdometry::odometry_callback(const nav_msgs::OdometryConstPtr& odomdata){
+		
+		_last_odom_data_time = odom_data_time;
+
 		odom_data_time = odomdata->header.stamp;
 
 		odom_data = *odomdata;
@@ -185,6 +188,17 @@ namespace semloam{
 
 		return checker_in;
 	}
+
+	void LaserOdometry::get_relative_trans(){
+
+		Time dt = odom_data_time - _last_odom_data_time;
+
+		float dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
+		float dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
+		float dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
+
+		float dqx = odom_data.pose.pose.orientation.x - _last_odom_data.pose.pose.orientaion.x;
+
 
 	void LaserOdometry::init_pc_slide(){
 		tf::Quaternion pose_now;
@@ -264,6 +278,12 @@ namespace semloam{
 
 			_last_odom_data = odom_data;
 
+			// getting laser odometry's init parameter
+			laserodometry.pose.pose.position = _last_odom_data.pose.pose.position;
+			laserodometry.pose.pose.orientation = _last_odom_data.pose.pose.orientation;
+			laserodometry.twist.twist.linear = _last_odom_data.twist.twist.linear;
+			laserodometry.twist.twist.angular = _last_odom_data.twist.twist.angular;
+
 			system_initialized_checker = true;
 			return;
 		}
@@ -272,6 +292,8 @@ namespace semloam{
 
 		if( status == false )
 			return;
+
+		get_relative_trans();
 
 		get_tf_data();
 

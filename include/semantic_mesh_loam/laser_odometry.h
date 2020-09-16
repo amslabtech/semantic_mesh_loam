@@ -40,6 +40,8 @@ namespace semloam{
 
 			bool hasNewData();
 
+			void get_relative_trans();
+
 			void get_tf_data();
 
 			void convert_coordinate_of_pc();
@@ -80,11 +82,12 @@ namespace semloam{
 			std::vector<int> _lastCloudEdgeInd;
 
 			nav_msgs::Odometry odom_data; //Contain current odometry data
-			nav_msgs::Odometry _last_odom_data; //It may be unneccesary
+			nav_msgs::Odometry _last_odom_data; //Constain last scans odometry data
+			nav_msgs::Odometry relative_pos_trans;
 
 			nav_msgs::Odometry laserodometry; //Calibrated odometry data
 			
-			tf::StampedTransform laserodometrytrans;
+			tf::StampedTransform odometrytrans;
 			tf::StampedTransform velo_to_map;
 
 			Time velo_scans_time;
@@ -94,6 +97,7 @@ namespace semloam{
 
 			Time _last_CloudEdge_time;
 			Time _last_CloudCentroid_time;
+			Time _last_odom_data_time;
 
 			bool velo_scans_checker = false;
 			bool CloudCentroid_checker = false;
