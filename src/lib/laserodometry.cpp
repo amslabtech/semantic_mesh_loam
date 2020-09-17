@@ -27,6 +27,8 @@ namespace semloam{
 		CloudEdgeInd.reserve(ind_size);
 		_lastCloudEdgeInd.reserve(ind_size);
 
+		tmp_pc_stored.reserve(feature_size);
+
 		odom_data.header.frame_id = "map";
 		odom_data.child_frame_id = "vehicle";
 
@@ -235,9 +237,61 @@ namespace semloam{
 
 	}*/
 
-	void LaserOdometry::init_pc_slide(){
-		//a
+	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
+
+		geometry_msgs::Transform trans_pose;
+		
+		trans_pose.translation.x = relative_pos_trans.dx;
+		trans_pose.translation.y = relative_pos_trans.dy;
+		trans_pose.translation.z = relative_pos_trans.dz;
+
+		trans_pose.rotation.x = relative_pos_trans.dqx;
+		trans_pose.rotation.y = relative_pos_trans.dqy;
+		trans_pose.rotation.z = relative_pos_trans.dqz;
+		trans_pose.rotation.w = relative_pos_trans.dqw;
+
+		tf::Transform slide_transform;
+		transformMsgToTF( trans_pose , slide_transform );
+
+		pcl_ros::transformPointCloud( FeatureCloud, FeatureCloud, slide_transform );
+
+		Eigen::Matrix4f init_slide_matrix;
+
+		pcl_ros::transformAsMatrix( slide_transform , init_slide_matrix );
+
+		return init_slide_matrix;
 	}
+
+	Eigen::Matrix4f LaserOdometry::pcl_pc_slide(){
+
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr FeatureCloud_Ptr(new pcl::PointCloud<pcl::PointXYZRGB>( FeatureCloud ) );
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastFeatureCloud_Ptr(new pcl::PointCloud<pcl::PointXYZRGB>( _lastFeatureCloud ) );
+
+
+		//Set the input source(current scan) and target(previous scan) pointcloud
+		icp.setInputCloud( FeatureCloud_Ptr); // only ::Ptr
+		icp.setInputTarget( _lastFeatureCloud_Ptr );
+
+		// Set the max correspondence distance to 15cm (e.g., correspondences with higher distances will be ignored)
+		icp.setMaxCorrespondenceDistance (0.15);
+
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations (50);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon (1e-8);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon (1);
+
+		icp.align( tmp_pc_stored );
+
+		Eigen::Matrix4f pcl_slide_matrix = icp.getFinalTransformation();
+
+		return pcl_slide_matrix;
+	}
+
+
 
 	void LaserOdometry::get_tf_data(){
 
@@ -340,7 +394,9 @@ namespace semloam{
 		convert_coordinate_of_pc();
 
 		// slide point cloud position
-		init_pc_slide();
+		Eigen::Matrix4f init_slide_matrix = init_pc_slide();
+
+		Eigen::Matrix4f pcl_slide_matrix = pcl_pc_slide();
 
 	}
 

@@ -17,6 +17,7 @@
 #include"geometry_msgs/Pose.h"
 #include"pcl_conversions/pcl_conversions.h"
 #include"pcl/segmentation/extract_clusters.h"
+#include"pcl/registration/icp.h"
 
 namespace semloam{
 
@@ -48,7 +49,9 @@ namespace semloam{
 
 			void convert_coordinate_of_pc();
 
-			void init_pc_slide();
+			Eigen::Matrix4f init_pc_slide();
+
+			Eigen::Matrix4f pcl_pc_slide();
 
 		private:
 			int scancount = 0;
@@ -70,6 +73,8 @@ namespace semloam{
 			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
 			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
 			pcl::PointCloud<pcl::PointXYZRGB> _lastFeatureCloud;
+
+			pcl::PointCloud<pcl::PointXYZRGB> tmp_pc_stored;
 
 			//KdTree
 			//pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudCentroidTree;
