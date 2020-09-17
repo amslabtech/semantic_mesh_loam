@@ -135,6 +135,8 @@ namespace semloam{
 
 		pcl::fromROSMsg(*centroiddata, CloudCentroid);
 
+		FeatureCloud = FeatureCloud + CloudCentroid;
+
 		std::cout << "catch centroid data" << std::endl;
 
 		CloudCentroid_checker = true;
@@ -144,6 +146,8 @@ namespace semloam{
 		CloudEdge_time = edgedata->header.stamp;
 
 		pcl::fromROSMsg(*edgedata, CloudEdge);
+
+		FeatureCloud = FeatureCloud + CloudEdge;
 
 		std::cout << "catch edge data" << std::endl;
 
@@ -191,15 +195,18 @@ namespace semloam{
 
 	void LaserOdometry::get_relative_trans(){
 
-		Time dt = odom_data_time - _last_odom_data_time;
+		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
+		relative_pos_trans.dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
+		relative_pos_trans.dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
 
-		float dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
-		float dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
-		float dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
+		relative_pos_trans.dqx = odom_data.pose.pose.orientation.x - _last_odom_data.pose.pose.orientation.x;
+		relative_pos_trans.dqy = odom_data.pose.pose.orientation.y - _last_odom_data.pose.pose.orientation.y;
+		relative_pos_trans.dqz = odom_data.pose.pose.orientation.z - _last_odom_data.pose.pose.orientation.z;
+		relative_pos_trans.dqw = odom_data.pose.pose.orientation.w - _last_odom_data.pose.pose.orientation.w;
 
-		float dqx = odom_data.pose.pose.orientation.x - _last_odom_data.pose.pose.orientaion.x;
+	}
 
-
+	/*
 	void LaserOdometry::init_pc_slide(){
 		tf::Quaternion pose_now;
 		tf::Quaternion pose_last;
@@ -226,16 +233,19 @@ namespace semloam{
 		pcl::transformPointCloud( _lastCloudCentroid, _lastCloudCentroid, offset, rotation );
 		pcl::transformPointCloud( _lastCloudEdge, _lastCloudEdge, offset, rotation );
 
-	}
+	}*/
 
-	//void LaserOdometry::init_pc_slide();
+	void LaserOdometry::init_pc_slide(){
+		//a
+	}
 
 	void LaserOdometry::get_tf_data(){
 
 		while(true){
 
 			try{
-				listener.lookupTransform("map", "velodyne", velo_scans_time, velo_to_map);
+				listener.lookupTransform("map", "velodyne", _last_odom_data_time, velo_to_map);
+				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
 				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME");
 				break;
 			}
@@ -253,39 +263,68 @@ namespace semloam{
 	void LaserOdometry::convert_coordinate_of_pc(){
 
 		//Transforming current scans
-		pcl_ros::transformPointCloud("map", velo_scans_time, velo_scans, "velodyne", velo_scans, listener);
-		pcl_ros::transformPointCloud("map", velo_scans_time, CloudCentroid, "velodyne", CloudCentroid, listener);
-		pcl_ros::transformPointCloud("map", velo_scans_time, CloudEdge, "velodyne", CloudEdge, listener);
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans, "laserodometry", velo_scans, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, CloudCentroid, "laserodometry", CloudCentroid, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, CloudEdge, "laserodometry", CloudEdge, listener);
+
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud, "laserodometry", FeatureCloud, listener);
+
+	}
+
+	bool LaserOdometry::initialization(){
+		//CloudCentroid.swap(_lastCloudCentroid);
+		//CloudEdge.swap(_lastCloudEdge);
+		FeatureCloud.swap( _lastFeatureCloud );
+
+		_last_CloudCentroid_time = CloudCentroid_time;
+		_last_CloudEdge_time = CloudEdge_time;
+
+		_last_odom_data = odom_data;
+		_last_odom_data_time = odom_data_time;
+
+		// getting laser odometry's init parameter
+		laserodometry.pose.pose.position = _last_odom_data.pose.pose.position;
+		laserodometry.pose.pose.orientation = _last_odom_data.pose.pose.orientation;
+		laserodometry.twist.twist.linear = _last_odom_data.twist.twist.linear;
+		laserodometry.twist.twist.angular = _last_odom_data.twist.twist.angular;
+
+		geometry_msgs::Pose init_pose;
+		init_pose.position = laserodometry.pose.pose.position;
+		init_pose.orientation = laserodometry.pose.pose.orientation;
+		
+		tf::Transform init_transform;
+		poseMsgToTF(init_pose, init_transform);
+		br.sendTransform(tf::StampedTransform(init_transform, _last_odom_data_time, "map", "laserodometry"));
+
+		while(true){
+			try{
+				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
+				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME");
+				break;
+			}
+			catch(tf::TransformException ex){
+				ROS_ERROR("%s", ex.what() );
+				ros::Duration(1.0).sleep();
+			}
+		}
 
 		//Transform previous scans
-		pcl_ros::transformPointCloud("map", _last_CloudCentroid_time, _lastCloudCentroid, "velodyne", _lastCloudCentroid, listener);
-		pcl_ros::transformPointCloud("map", _last_CloudEdge_time, _lastCloudEdge, "velodyne", _lastCloudEdge, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastCloudCentroid, "laserodometry", _lastCloudCentroid, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastCloudEdge, "laserodometry", _lastCloudEdge, listener);
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastFeatureCloud, "laserodometry", _lastFeatureCloud, listener );
+
+		return true;
 
 	}
 
 	void LaserOdometry::process(){
 
 		if(!system_initialized_checker){
-
-			CloudCentroid.swap(_lastCloudCentroid);
-			CloudEdge.swap(_lastCloudEdge);
-
-			_last_CloudCentroid_time = CloudCentroid_time;
-			_last_CloudEdge_time = CloudEdge_time;
-
-			//_lastCloudCentroidTree->setInputCloud( _lastCloudCentroid );
-			//_lastCloudEdgeTree->setInputCloud( _lastCloudEdge );
-
-			_last_odom_data = odom_data;
-
-			// getting laser odometry's init parameter
-			laserodometry.pose.pose.position = _last_odom_data.pose.pose.position;
-			laserodometry.pose.pose.orientation = _last_odom_data.pose.pose.orientation;
-			laserodometry.twist.twist.linear = _last_odom_data.twist.twist.linear;
-			laserodometry.twist.twist.angular = _last_odom_data.twist.twist.angular;
-
-			system_initialized_checker = true;
-			return;
+			bool init_bool = initialization();
+			if(init_bool){
+				system_initialized_checker = true;
+				return;
+			}
 		}
 
 		bool status = hasNewData();

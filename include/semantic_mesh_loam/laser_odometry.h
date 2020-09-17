@@ -38,6 +38,8 @@ namespace semloam{
 
 			void process();
 
+			bool initialization();
+
 			bool hasNewData();
 
 			void get_relative_trans();
@@ -83,12 +85,16 @@ namespace semloam{
 
 			nav_msgs::Odometry odom_data; //Contain current odometry data
 			nav_msgs::Odometry _last_odom_data; //Constain last scans odometry data
-			nav_msgs::Odometry relative_pos_trans;
+			
+			pos_trans relative_pos_trans;
 
 			nav_msgs::Odometry laserodometry; //Calibrated odometry data
 			
 			tf::StampedTransform odometrytrans;
 			tf::StampedTransform velo_to_map;
+			tf::StampedTransform laserodometry_to_map;
+
+			tf::TransformBroadcaster br; //publish tf data between map and laserodometry
 
 			Time velo_scans_time;
 			Time CloudCentroid_time;

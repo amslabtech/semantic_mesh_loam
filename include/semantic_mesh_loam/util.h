@@ -11,11 +11,22 @@
 namespace semloam
 { 
   using Time = ros::Time;
-  
+ 
   struct color_data{
 	  int r;
 	  int g;
 	  int b;
+  };
+
+  struct pos_trans{
+	  float dx;
+	  float dy;
+	  float dz;
+
+	  float dqx;
+	  float dqy;
+	  float dqz;
+	  float dqw;
   };
 
 }
