@@ -38,10 +38,8 @@ namespace semloam{
 		laserodometry.header.frame_id = "map";
 		laserodometry.child_frame_id = "laserodometry";
 
-		/*
-		odometrytrans.header.frame_id = "map";
-		odometrytrans.child_frame_id = "vehicle";
-		*/
+		laserodometry_to_map.frame_id_ = "map";
+		laserodometry_to_map.child_frame_id_ = "laserodometry";
 
 		system_initialized_checker = false;
 
@@ -52,7 +50,9 @@ namespace semloam{
 		float fparam;
 		int iparam;
 
-		if(privateNode.getParam("__systemdelay", iparam)){
+		std::cout << "Set up Laser Odometry" << std::endl;
+
+		if(privateNode.getParam("systemdelay", iparam)){
 			if(iparam < 1){
 				ROS_ERROR("Invalid __systemdelay parameter: %d",iparam);
 				return false;
@@ -61,7 +61,9 @@ namespace semloam{
 				__systemdelay = iparam;
 			}
 		}
-		
+
+		std::cout << "__systemdelay" << std::endl;
+
 		if(privateNode.getParam("MaxCorrespondDistance", fparam)){
 			if(fparam < 0.0){
 				ROS_ERROR("Invalid MaxCorrespondDistance parameter: %f",fparam);
@@ -152,6 +154,8 @@ namespace semloam{
 			}
 		}
 
+		std::cout << "private node set up end" << std::endl;
+
 		_pubLaserOdomToInit = node.advertise<nav_msgs::Odometry>("/laser_odom_to_init", 5);
 		_pubVelodynePoints3 = node.advertise<sensor_msgs::PointCloud2>("/velodyne_points3", 2);
 		_pubCentroidPointLast = node.advertise<sensor_msgs::PointCloud2>("/centroid_point_last", 2);
@@ -169,6 +173,7 @@ namespace semloam{
 		_subOdometry = node.subscribe<nav_msgs::Odometry>
 			("/odometry2", 2, &LaserOdometry::odometry_callback, this);
 
+		std::cout << "End set up Laser Odometry" << std::endl;
 
 		return true;
 	}
@@ -370,6 +375,7 @@ namespace semloam{
 		laserodometry.twist.twist.linear = _last_odom_data.twist.twist.linear;
 		laserodometry.twist.twist.angular = _last_odom_data.twist.twist.angular;
 
+		/*
 		geometry_msgs::Pose init_pose;
 		init_pose.position = laserodometry.pose.pose.position;
 		init_pose.orientation = laserodometry.pose.pose.orientation;
@@ -377,6 +383,16 @@ namespace semloam{
 		tf::Transform init_transform;
 		poseMsgToTF(init_pose, init_transform);
 		br.sendTransform(tf::StampedTransform(init_transform, _last_odom_data_time, "map", "laserodometry"));
+		*/
+
+		laserodometry_to_map.stamp_ = _last_odom_data_time;
+		laserodometry_to_map.setRotation( tf::Quaternion( laserodometry.pose.pose.orientation.x, laserodometry.pose.pose.orientation.y, laserodometry.pose.pose.orientation.z, laserodometry.pose.pose.orientation.w ) );
+		laserodometry_to_map.setOrigin( tf::Vector3( laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z) );
+
+		br.sendTransform( laserodometry_to_map );
+
+		std::cout << "send init tf" << std::endl;
+		
 
 		while(true){
 			try{
@@ -393,6 +409,8 @@ namespace semloam{
 		//Transform previous scans
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastCloudCentroid, "laserodometry", _lastCloudCentroid, listener);
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastCloudEdge, "laserodometry", _lastCloudEdge, listener);
+		
+		std::cout << "pcl trans" << std::endl;
 		pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastFeatureCloud, "laserodometry", _lastFeatureCloud, listener );
 
 		return true;
@@ -431,9 +449,11 @@ namespace semloam{
 		calib_pose.orientation.z = laserodometry.pose.pose.orientation.z + slide.rotation.z;
 		calib_pose.orientation.w = laserodometry.pose.pose.orientation.w + slide.rotation.w;
 
+		/*
 		tf::Transform calib_transform;
 		poseMsgToTF( calib_pose , calib_transform );
 		br.sendTransform(tf::StampedTransform(calib_transform, odom_data_time, "map", "laserodometry"));
+		*/
 
 		laserodometry.pose.pose.position = calib_pose.position;
 		laserodometry.pose.pose.orientation = calib_pose.orientation;
@@ -442,6 +462,11 @@ namespace semloam{
 
 		laserodometry.header.stamp = odom_data_time;
 
+		laserodometry_to_map.stamp_ = laserodometry.header.stamp;
+		laserodometry_to_map.setRotation( tf::Quaternion( laserodometry.pose.pose.orientation.x, laserodometry.pose.pose.orientation.y, laserodometry.pose.pose.orientation.z, laserodometry.pose.pose.orientation.w ) );
+		laserodometry_to_map.setOrigin( tf::Vector3( laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z) );
+
+		br.sendTransform( laserodometry_to_map );
 
 	}
 
@@ -547,9 +572,13 @@ namespace semloam{
 
 	void LaserOdometry::spin(){
 
-		ros::Rate rate(100);
+		ros::Rate rate(10);
 
 		rate.sleep();
+		rate.sleep();
+		rate.sleep();
+		rate.sleep();
+
 
 		while( ros::ok() ){
 

@@ -5,7 +5,7 @@
 	</node>
 
 	<node pkg="semantic_mesh_loam" type="laser_odometry" name="laser_odometry" output="screen">
-		<param name="__systemdelay" value=10 />
+		<param name="systemdelay" value="50" type="int"/>
 	</node>
 
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />
