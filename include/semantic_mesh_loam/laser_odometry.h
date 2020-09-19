@@ -53,6 +53,14 @@ namespace semloam{
 
 			Eigen::Matrix4f pcl_pc_slide();
 
+			void send_tf_data(Eigen::Matrix4f Tm);
+
+			void final_transform_pc(Eigen::Matrix4f laserodometry_trans_matrix);
+
+			void publish_result();
+
+			void reset();
+
 		private:
 			int scancount = 0;
 			float scanperiod;
@@ -60,6 +68,13 @@ namespace semloam{
 			long framecount;
 			size_t max_iterations;
 			bool system_initialized_checker;
+			int __systemdelay = 10;
+
+			//ICP parameter
+			float MaxCorrespondDistance = 0.15;
+			int MaximumIterations = 50;
+			float TransformationEpsilon = 1e-8;
+			float EuclideanFitnessEpsilon = 1.0;
 
 			float delta_t_abort; //optimization abort threshold for delta T
 			float delta_r_abort; //optimization abort threshold for delta R
@@ -70,8 +85,8 @@ namespace semloam{
 			pcl::PointCloud<pcl::PointXYZRGB> FeatureCloud;
 
 			//Contain last scan's feature points data
-			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
-			pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
+			//pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
+			//pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
 			pcl::PointCloud<pcl::PointXYZRGB> _lastFeatureCloud;
 
 			pcl::PointCloud<pcl::PointXYZRGB> tmp_pc_stored;
@@ -81,12 +96,12 @@ namespace semloam{
 			//pcl::search::KdTree<pcl::PointXYZRGB>::Ptr _lastCloudEdgeTree;
 
 			//Contain Centroid index
-			std::vector<int> CloudCentroidInd;
-			std::vector<int> _lastCloudCentroidInd;
+			//std::vector<int> CloudCentroidInd;
+			//std::vector<int> _lastCloudCentroidInd;
 
 			//Contain Edge index
-			std::vector<int> CloudEdgeInd;
-			std::vector<int> _lastCloudEdgeInd;
+			//std::vector<int> CloudEdgeInd;
+			//std::vector<int> _lastCloudEdgeInd;
 
 			nav_msgs::Odometry odom_data; //Contain current odometry data
 			nav_msgs::Odometry _last_odom_data; //Constain last scans odometry data
@@ -122,6 +137,7 @@ namespace semloam{
 			ros::Publisher _pubLaserOdomToInit;
 			ros::Publisher _pubCentroidPointLast;
 			ros::Publisher _pubEdgePointLast;
+			//ros::Publisher _pubFeaturePoints3;
 			ros::Publisher _pubVelodynePoints3;
 
 			ros::Subscriber _subCentroid;
