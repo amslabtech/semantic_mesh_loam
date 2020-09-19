@@ -14,7 +14,7 @@
 #include"pcl/filters/extract_indices.h"
 #include"pcl/features/normal_3d.h"
 //#include"pcl/visualization/cloud_viewer.h"
-
+#include"nav_msgs/Odometry.h"
 
 namespace semloam{
 
@@ -118,10 +118,12 @@ namespace semloam{
 
 			void pointcloud_callback(const sensor_msgs::PointCloud2ConstPtr &laserscan);
 
+			void odometry_callback(const nav_msgs::OdometryConstPtr& odom);
+
 			bool setParams(ros::NodeHandle& node, ros::NodeHandle& privateNode, RegistrationParams& config_out);
 			bool parseParams(ros::NodeHandle& privateNode, RegistrationParams& config_out);
 
-			void publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime);
+			void publish_data(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime);
 
 		private:
 
@@ -157,12 +159,17 @@ namespace semloam{
 			const size_t pc_size_min =  10000;
 
 			ros::Subscriber _subLaserCloud;
+			ros::Subscriber _subOdometry;
 
 			ros::Publisher _pubLaserCloud;
 			ros::Publisher _pubCentroid;
 			ros::Publisher _pubEdge;
+			ros::Publisher _pubOdom;
 
 			MultiScanMapper _scanMapper;
+
+			nav_msgs::Odometry odom_data;
+			bool odom_checker = false;
 
 			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
 			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;

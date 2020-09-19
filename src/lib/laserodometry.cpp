@@ -167,7 +167,7 @@ namespace semloam{
 		_subEdge = node.subscribe<sensor_msgs::PointCloud2>
 			("/edge_points", 2, &LaserOdometry::edge_callback, this);
 		_subOdometry = node.subscribe<nav_msgs::Odometry>
-			("/odometry", 2, &LaserOdometry::odometry_callback, this);
+			("/odometry2", 2, &LaserOdometry::odometry_callback, this);
 
 
 		return true;

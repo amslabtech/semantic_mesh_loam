@@ -136,6 +136,8 @@ namespace semloam{
 		_pubLaserCloud = node.advertise<sensor_msgs::PointCloud2>("/velodyne_points2", 2);
 		_pubCentroid = node.advertise<sensor_msgs::PointCloud2>("/centroid_points", 2);
 		_pubEdge = node.advertise<sensor_msgs::PointCloud2>("/edge_points", 2);
+		_pubOdom = node.advertise<nav_msgs::Odometry>("/odometry2", 10);
+
 
 		return true;
 	}
@@ -221,7 +223,20 @@ namespace semloam{
 		//std::cout << laserCloudIn.points[0].x << std::endl;
 
 		//process(laserCloudIn, fromROSTime(laserscan->header.stamp));
-		process(laserCloudIn, laserscan->header.stamp);
+		if( /*odom_checker ==*/ true ){
+			
+			process(laserCloudIn, laserscan->header.stamp);
+			odom_checker = false;
+
+		}
+	}
+
+	void SemClassifer::odometry_callback(const nav_msgs::OdometryConstPtr& odom){
+
+		odom_data = *odom;
+		odom_checker = true;
+		//kokode pub sitara hayai
+		//_pubOdom.publish(odom_data);
 
 	}
 
@@ -283,6 +298,8 @@ namespace semloam{
 
 		_subLaserCloud = node.subscribe<sensor_msgs::PointCloud2>
 			("/velodyne_points", 2, &SemClassifer::pointcloud_callback, this);
+		_subOdometry = node.subscribe<nav_msgs::Odometry>
+			("/odom_pose", 10, &SemClassifer::odometry_callback, this);
 
 		return true;
 	}
@@ -368,7 +385,7 @@ namespace semloam{
 		return true;
 	}
 
-	void SemClassifer::publish_pointcloud(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime){
+	void SemClassifer::publish_data(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const pcl::PointCloud<pcl::PointXYZRGB>& CloudCentroid, const pcl::PointCloud<pcl::PointXYZRGB>& CloudEdge, const Time& scanTime){
 		sensor_msgs::PointCloud2 velo, cent, edge;
 
 		pcl::toROSMsg(laserCloudIn, velo);
@@ -387,9 +404,10 @@ namespace semloam{
 		_pubLaserCloud.publish(velo);
 		_pubCentroid.publish(cent);
 		_pubEdge.publish(edge);
+		_pubOdom.publish(odom_data);
 
 	}
-
+	
 	int SemClassifer::Clustering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud){
 
 
@@ -727,7 +745,8 @@ namespace semloam{
 		//std::cout << "b" << std::endl;
 
 		//convert pcl to ros pointcloud2 and publish pointcloud 
-		publish_pointcloud(laserCloudIn, CloudCentroid, CloudEdge, scanTime);
+		publish_data(laserCloudIn, CloudCentroid, CloudEdge, scanTime);
+		//publish_data();
 
 		//clear edge and centroid
 		CloudCentroid.clear();

@@ -4,12 +4,15 @@
 		<param name="lidar" value="HDL-64E" />
 	</node>
 
+	<node pkg="semantic_mesh_loam" type="laser_odometry" name="laser_odometry" output="screen">
+		<param name="__systemdelay" value=10 />
+	</node>
+
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />
 	<arg name="file_1" default="semantickitti_sequence00" />
-	<arg name="play_speed" default="-r 0.5" />
+	<arg name="play_speed" default="-r 0.2" />
 
 	<node pkg="rosbag" type="play" name="rosbag_play" output="screen"
 	args="$(arg path)$(arg file_1).bag $(arg play_speed)" />
 
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_mesh_loam)/config/test_classify_pointcloud.rviz"/>
 </launch>

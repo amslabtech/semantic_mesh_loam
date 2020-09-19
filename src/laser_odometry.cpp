@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv){
 
-	ros::init(argc, argv, "laserodometry");
+	ros::init(argc, argv, "laser_odometry");
 	ros::NodeHandle node;
 	ros::NodeHandle privateNode("~");
 
