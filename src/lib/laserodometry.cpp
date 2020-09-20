@@ -13,9 +13,13 @@ namespace semloam{
 
 		
 		velo_scans.reserve(scan_size);
+		velo_scans_child.reserve(scan_size);
+
 		CloudCentroid.reserve(feature_size);
 		CloudEdge.reserve(feature_size);
+
 		FeatureCloud.reserve(feature_size);
+		FeatureCloud_child.reserve(feature_size);
 		
 		//_lastCloudCentroid.reserve(feature_size);
 		//_lastCloudEdge.reserve(feature_size);
@@ -28,6 +32,13 @@ namespace semloam{
 		//_lastCloudEdgeInd.reserve(ind_size);
 
 		tmp_pc_stored.reserve(feature_size);
+
+		velo_scans.header.frame_id = "map";
+		velo_scans_child.header.frame_id = "laserodometry";
+
+		FeatureCloud.header.frame_id = "map";
+		FeatureCloud_child.header.frame_id = "laserodometry";
+		_lastFeatureCloud.header.frame_id = "map";
 
 		odom_data.header.frame_id = "map";
 		odom_data.child_frame_id = "vehicle";
@@ -183,7 +194,8 @@ namespace semloam{
 
 		std::cout << "velo_scans_time: " << velo_scans_time << std::endl;
 		
-		pcl::fromROSMsg(*clouddata, velo_scans);
+		pcl::fromROSMsg(*clouddata, velo_scans_child);
+		velo_scans_child.header.frame_id = "laserodometry";
 
 		std::cout << "velo data catched" << std::endl;
 
@@ -195,7 +207,7 @@ namespace semloam{
 
 		pcl::fromROSMsg(*centroiddata, CloudCentroid);
 
-		FeatureCloud = FeatureCloud + CloudCentroid;
+		FeatureCloud_child = FeatureCloud_child + CloudCentroid;
 
 		std::cout << "catch centroid data" << std::endl;
 
@@ -207,7 +219,7 @@ namespace semloam{
 
 		pcl::fromROSMsg(*edgedata, CloudEdge);
 
-		FeatureCloud = FeatureCloud + CloudEdge;
+		FeatureCloud_child = FeatureCloud_child + CloudEdge;
 
 		std::cout << "catch edge data" << std::endl;
 
@@ -216,11 +228,13 @@ namespace semloam{
 
 	void LaserOdometry::odometry_callback(const nav_msgs::OdometryConstPtr& odomdata){
 		
-		_last_odom_data_time = odom_data_time;
+		//_last_odom_data_time = odom_data_time;
 
 		odom_data_time = odomdata->header.stamp;
 
-		std::cout << "odom_data_time: " << odom_data_time << std::endl;
+		//std::cout << "      odom_data_time: " << odom_data_time << std::endl;
+		//std::cout << "_last_odom_data_time: " << _last_odom_data_time << std::endl;
+
 
 		odom_data = *odomdata;
 
@@ -290,10 +304,15 @@ namespace semloam{
 
 		pcl_ros::transformAsMatrix( slide_transform , init_slide_matrix );
 
+		std::cout << "init slide matrix" << std::endl;
+		std::cout << init_slide_matrix << std::endl;
+
 		return init_slide_matrix;
 	}
 
 	Eigen::Matrix4f LaserOdometry::pcl_pc_slide(){
+
+		std::cout << "Start ICP" << std::endl;
 
 		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
@@ -303,10 +322,12 @@ namespace semloam{
 
 		//Set the input source(current scan) and target(previous scan) pointcloud
 		//icp.setInputCloud( FeatureCloud_Ptr); // only ::Ptr
+		std::cout << "set source and target frame" << std::endl;
 		icp.setInputSource( FeatureCloud_Ptr );
 		icp.setInputTarget( _lastFeatureCloud_Ptr );
 
 		// Set the max correspondence distance to 15cm (e.g., correspondences with higher distances will be ignored)
+		std::cout << "set ICP parameter" << std::endl;
 		icp.setMaxCorrespondenceDistance (0.15);
 
 		// Set the maximum number of iterations (criterion 1)
@@ -318,7 +339,14 @@ namespace semloam{
 
 		icp.align( tmp_pc_stored );
 
+		std::cout << "Do ICP" << std::endl;
 		Eigen::Matrix4f pcl_slide_matrix = icp.getFinalTransformation();
+
+		std::cout <<"PCL Matrix" << std::endl;
+		std::cout << pcl_slide_matrix << std::endl;
+		
+		pcl::transformPointCloud( FeatureCloud , FeatureCloud , pcl_slide_matrix );
+
 
 		return pcl_slide_matrix;
 	}
@@ -332,7 +360,7 @@ namespace semloam{
 			try{
 				listener.lookupTransform("map", "velodyne", _last_odom_data_time, velo_to_map);
 				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
-				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME");
+				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN GET_TF_DATA");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -353,15 +381,31 @@ namespace semloam{
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans, "laserodometry", velo_scans, listener);
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, CloudCentroid, "laserodometry", CloudCentroid, listener);
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, CloudEdge, "laserodometry", CloudEdge, listener);
+		
+		std::cout << "Transform coordinate" << std::endl;
 
-		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud, "laserodometry", FeatureCloud, listener);
+		/*
+		std::cout << "      odom_data_time: " << odom_data_time << std::endl;
+		std::cout << "_last_odom_data_time: " << _last_odom_data_time << std::endl;
+		std::cout << "  _tf_odom_data_time: " << _tf_odom_data_time << std::endl;
+		*/
+
+		//Time tfdata_time = _last_odom_data_time;
+		//tfdata_time.nsec = tfdata_time.nsec - 1000.0;
+
+		//std::cout << "tfdata_time: " << tfdata_time << std::endl;
+
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener);
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans_child, "laserodometry", velo_scans, listener);
+
+		std::cout << "convert coordinate" << std::endl;
 
 	}
 
 	bool LaserOdometry::initialization(){
 		//CloudCentroid.swap(_lastCloudCentroid);
 		//CloudEdge.swap(_lastCloudEdge);
-		FeatureCloud.swap( _lastFeatureCloud );
+		//FeatureCloud.swap( _lastFeatureCloud );
 
 		_last_CloudCentroid_time = CloudCentroid_time;
 		_last_CloudEdge_time = CloudEdge_time;
@@ -397,7 +441,7 @@ namespace semloam{
 		while(true){
 			try{
 				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
-				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME");
+				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN INITIALIZATION");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -411,8 +455,10 @@ namespace semloam{
 		//pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastCloudEdge, "laserodometry", _lastCloudEdge, listener);
 		
 		std::cout << "pcl trans" << std::endl;
-		pcl_ros::transformPointCloud("map", _last_odom_data_time, _lastFeatureCloud, "laserodometry", _lastFeatureCloud, listener );
+		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener );
 
+		_lastFeatureCloud = FeatureCloud;
+		FeatureCloud.clear();
 		return true;
 
 	}
@@ -470,23 +516,25 @@ namespace semloam{
 
 	}
 
-	/*
 	void LaserOdometry::final_transform_pc(Eigen::Matrix4f laserodometry_trans_matrix){
 
-		pcl::transformPointCloud( velo_scans , velo_scans , laserodometrty_trans_matrix );
-		pcl::transformPointCloud( FeatureCloud , FeatureCloud , laserodometry_trans_matrix );
+		pcl::transformPointCloud( velo_scans , velo_scans , laserodometry_trans_matrix );
+		//pcl::transformPointCloud( FeatureCloud , FeatureCloud , laserodometry_trans_matrix );
 
 	}
-	*/
 
 	void LaserOdometry::publish_result(){
 
 		sensor_msgs::PointCloud2 velo, cent, edge;
+		//sensor_msgs::PointCloud2 velo, feature;
 
-		pcl::toROSMsg(velo_scans, velo);
+		pcl::toROSMsg(velo_scans_child, velo);
 		velo.header.frame_id = "laserodometry";
 		velo.header.stamp = odom_data_time;
 
+		//pcl::toROSMsg(FeatureCloud, feature);
+		//feature.header.frame_id = 
+		
 		pcl::toROSMsg(CloudCentroid, cent);
 		cent.header.frame_id = "laserodometry";
 		cent.header.stamp = odom_data_time;
@@ -494,11 +542,20 @@ namespace semloam{
 		pcl::toROSMsg(CloudEdge, edge);
 		edge.header.frame_id = "laserodometry";
 		edge.header.stamp = odom_data_time;
+		
 
 		_pubVelodynePoints3.publish(velo);
 		_pubCentroidPointLast.publish(cent);
 		_pubEdgePointLast.publish(edge);
 		_pubLaserOdomToInit.publish(laserodometry);
+
+		/*
+		std::cout << "laserodometry" << std::endl;
+		std::cout << laserodometry << std::endl;
+
+		std::cout << "odom_data" << std::endl;
+		std::cout << odom_data << std::endl;
+		*/
 
 	}
 
@@ -506,13 +563,18 @@ namespace semloam{
 		tmp_pc_stored.clear();
 
 		velo_scans.clear();
+		velo_scans_child.clear();
+
 		CloudCentroid.clear();
 		CloudEdge.clear();
 
 		_lastFeatureCloud = FeatureCloud;
 		FeatureCloud.clear();
+		FeatureCloud_child.clear();
 
 		_last_odom_data = odom_data;
+
+		_last_odom_data_time = odom_data_time;
 
 		velo_scans_checker = false;
 		CloudCentroid_checker = false;
@@ -562,7 +624,7 @@ namespace semloam{
 		send_tf_data(laserodometry_trans_matrix);
 
 		// transform to calibrated position
-		//final_transform_pc(laserodometry_trans_matrix);
+		final_transform_pc(laserodometry_trans_matrix);
 
 		publish_result();
 

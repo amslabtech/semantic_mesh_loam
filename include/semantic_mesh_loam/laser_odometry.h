@@ -71,18 +71,22 @@ namespace semloam{
 			int __systemdelay = 10;
 
 			//ICP parameter
-			float MaxCorrespondDistance = 0.15;
+			float MaxCorrespondDistance = 1.0;
 			int MaximumIterations = 50;
-			float TransformationEpsilon = 1e-8;
+			float TransformationEpsilon = 1e-3;
 			float EuclideanFitnessEpsilon = 1.0;
 
 			float delta_t_abort; //optimization abort threshold for delta T
 			float delta_r_abort; //optimization abort threshold for delta R
 
 			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
+			pcl::PointCloud<pcl::PointXYZRGB> velo_scans_child; //frameid is laserodometry
+
 			pcl::PointCloud<pcl::PointXYZRGB> CloudCentroid;
 			pcl::PointCloud<pcl::PointXYZRGB> CloudEdge;
+
 			pcl::PointCloud<pcl::PointXYZRGB> FeatureCloud;
+			pcl::PointCloud<pcl::PointXYZRGB> FeatureCloud_child;
 
 			//Contain last scan's feature points data
 			//pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
