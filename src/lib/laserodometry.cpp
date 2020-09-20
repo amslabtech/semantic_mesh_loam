@@ -620,6 +620,7 @@ namespace semloam{
 
 		//Calculate calibrated laserodometry as homogenerous transformation matrix
 		Eigen::Matrix4f laserodometry_trans_matrix = init_slide_matrix * pcl_slide_matrix;
+		//Eigen::Matrix4f laserodometry_trans_matrix = ( pcl_slide_matrix * init_slide_matrix.inverse() );
 
 		// Calculate calibrated odometry data and publish tf data
 		send_tf_data(laserodometry_trans_matrix);
