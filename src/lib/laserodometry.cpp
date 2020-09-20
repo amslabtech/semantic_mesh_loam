@@ -465,6 +465,73 @@ namespace semloam{
 	}
 
 	void LaserOdometry::send_tf_data(Eigen::Matrix4f Tm){
+
+		tf::Matrix3x3 rota;
+		tf::Quaternion rot_quat;
+
+		quaternionMsgToTF( laserodometry.pose.pose.orientation, rot_quat );
+		/*
+		rot_quat.x() = laserodometry.pose.pose.orientation.x;
+		rot_quat.y() = laserodometry.pose.pose.orientation.y;
+		rot_quat.z() = laserodometry.pose.pose.orientation.z;
+		rot_quat.w() = laserodometry.pose.pose.orientation.w;
+		*/
+		rota.setRotation( rot_quat );
+
+		tf::Vector3 place;
+		place.setValue(  laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z );
+
+		Eigen::Matrix4f last_pose;
+
+		last_pose <<               rota[0][0], rota[0][1], rota[0][2], place[0],
+				           rota[1][0], rota[1][1], rota[1][2], place[1],
+				           rota[2][0], rota[2][1], rota[2][2], place[2],
+				                  0.0,        0.0,        0.0,     1.0;
+
+		std::cout << "getting now pose as 4x4 matrix" << std::endl;
+		Eigen::Matrix4f now_pose = Tm * last_pose;
+
+		tf::Matrix3x3 orientation_mat(
+				now_pose(0,0), now_pose(0,1), now_pose(0,2),
+				now_pose(1,0), now_pose(1,1), now_pose(1,2),
+				now_pose(2,0), now_pose(2,1), now_pose(2,2) );
+
+		tf::Quaternion quat;
+
+		orientation_mat.getRotation( quat );
+		quat.normalize();
+
+		geometry_msgs::Pose cur_pose;
+		
+		//cur_pose.orientation = quat;
+		quaternionTFToMsg( quat , cur_pose.orientation );
+
+		cur_pose.position.x = now_pose(0,3);
+		cur_pose.position.y = now_pose(1,3);
+		cur_pose.position.z = now_pose(2,3);
+
+		tf::Transform calib_transform;
+		poseMsgToTF( cur_pose , calib_transform );
+
+		std::cout << "send current TF data" << std::endl;
+
+		br.sendTransform( tf::StampedTransform( calib_transform, odom_data_time, "map", "laserodometry") );
+
+		// rewrite laserodometry
+		laserodometry.pose.pose = cur_pose;
+		laserodometry.twist.twist = odom_data.twist.twist;
+		laserodometry.header.stamp = odom_data_time;
+
+		// rewrite laserodometry_to_map
+		laserodometry_to_map.stamp_ = laserodometry.header.stamp;
+		laserodometry_to_map.setRotation( tf::Quaternion( laserodometry.pose.pose.orientation.x, laserodometry.pose.pose.orientation.y, laserodometry.pose.pose.orientation.z, laserodometry.pose.pose.orientation.w ) );
+		laserodometry_to_map.setOrigin( tf::Vector3( laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z) );
+
+	}
+
+
+	/*
+	void LaserOdometry::send_tf_data(Eigen::Matrix4f Tm){
 		
 		geometry_msgs::Transform slide;
 
@@ -496,11 +563,11 @@ namespace semloam{
 		calib_pose.orientation.z = laserodometry.pose.pose.orientation.z + slide.rotation.z;
 		calib_pose.orientation.w = laserodometry.pose.pose.orientation.w + slide.rotation.w;
 
-		/*
-		tf::Transform calib_transform;
-		poseMsgToTF( calib_pose , calib_transform );
-		br.sendTransform(tf::StampedTransform(calib_transform, odom_data_time, "map", "laserodometry"));
-		*/
+		
+		//tf::Transform calib_transform;
+		//poseMsgToTF( calib_pose , calib_transform );
+		//br.sendTransform(tf::StampedTransform(calib_transform, odom_data_time, "map", "laserodometry"));
+		
 
 		laserodometry.pose.pose.position = calib_pose.position;
 		laserodometry.pose.pose.orientation = calib_pose.orientation;
@@ -515,7 +582,7 @@ namespace semloam{
 
 		br.sendTransform( laserodometry_to_map );
 
-	}
+	}*/
 
 	void LaserOdometry::final_transform_pc(Eigen::Matrix4f laserodometry_trans_matrix){
 
@@ -619,7 +686,7 @@ namespace semloam{
 		Eigen::Matrix4f pcl_slide_matrix = pcl_pc_slide();
 
 		//Calculate calibrated laserodometry as homogenerous transformation matrix
-		Eigen::Matrix4f laserodometry_trans_matrix = init_slide_matrix * pcl_slide_matrix;
+		Eigen::Matrix4f laserodometry_trans_matrix = pcl_slide_matrix * init_slide_matrix;
 		//Eigen::Matrix4f laserodometry_trans_matrix = ( pcl_slide_matrix * init_slide_matrix.inverse() );
 
 		// Calculate calibrated odometry data and publish tf data
