@@ -82,6 +82,7 @@ namespace semloam{
 			}
 			else{
 				MaxCorrespondDistance = fparam;
+				std::cout << "MaxCorrespondDistance: " << MaxCorrespondDistance << std::endl;
 			}
 		}
 		
@@ -328,14 +329,14 @@ namespace semloam{
 
 		// Set the max correspondence distance to 15cm (e.g., correspondences with higher distances will be ignored)
 		std::cout << "set ICP parameter" << std::endl;
-		icp.setMaxCorrespondenceDistance (0.15);
+		icp.setMaxCorrespondenceDistance(MaxCorrespondDistance);
 
 		// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (50);
+		icp.setMaximumIterations(MaximumIterations);
 		// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (1e-8);
+		icp.setTransformationEpsilon(TransformationEpsilon);
 		// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (1);
+		icp.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
 
 		icp.align( tmp_pc_stored );
 
