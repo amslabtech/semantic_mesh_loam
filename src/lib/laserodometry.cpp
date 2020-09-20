@@ -634,7 +634,7 @@ namespace semloam{
 
 	void LaserOdometry::spin(){
 
-		ros::Rate rate(10);
+		ros::Rate rate(5);
 
 		rate.sleep();
 		rate.sleep();

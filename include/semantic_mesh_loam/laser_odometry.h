@@ -71,7 +71,7 @@ namespace semloam{
 			int __systemdelay = 10;
 
 			//ICP parameter
-			float MaxCorrespondDistance = 1.0;
+			float MaxCorrespondDistance = 0.15;
 			int MaximumIterations = 50;
 			float TransformationEpsilon = 1e-3;
 			float EuclideanFitnessEpsilon = 1.0;

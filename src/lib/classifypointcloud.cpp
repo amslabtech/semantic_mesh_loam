@@ -404,6 +404,9 @@ namespace semloam{
 		_pubLaserCloud.publish(velo);
 		_pubCentroid.publish(cent);
 		_pubEdge.publish(edge);
+
+		odom_data.header.stamp = scanTime;
+
 		_pubOdom.publish(odom_data);
 
 	}

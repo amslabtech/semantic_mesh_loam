@@ -10,9 +10,13 @@ int main(int argc, char** argv){
 
 	std::cout << "start" << std::endl;
 
+	ros::Rate rate(10);
+
 	if(semclassifer.setup(node, privateNode)){
 
 		ros::spin();
+
+		rate.sleep();
 	}
 
 	std::cout << "end classify program" << std::endl;
