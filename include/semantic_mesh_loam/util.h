@@ -29,6 +29,14 @@ namespace semloam
 	  double dqy;
 	  double dqz;
 	  double dqw;
+
+	  double vx;
+	  double vy;
+	  double vz;
+
+	  double vqx;
+	  double vqy;
+	  double vqz;
   };
 
 }
