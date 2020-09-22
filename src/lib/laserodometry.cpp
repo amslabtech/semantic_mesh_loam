@@ -276,11 +276,51 @@ namespace semloam{
 		relative_pos_trans.dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
 		relative_pos_trans.dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
 
+
+		tf::Quaternion now_quat, last_quat;
+
+		double now_roll, now_pitch, now_yaw;
+		double last_roll, last_pitch, last_yaw;
+
+		quaternionMsgToTF(       odom_data.pose.pose.orientation,  now_quat );
+		quaternionMsgToTF( _last_odom_data.pose.pose.orientation, last_quat );
+
+		tf::Matrix3x3( now_quat ).getRPY( now_roll , now_pitch , now_yaw );
+		std::cout << "now_roll: " << now_roll << std::endl;
+
+		tf::Matrix3x3( last_quat ).getRPY( last_roll, last_pitch , last_yaw );
+		std::cout << "last_roll:" << last_roll << std::endl;
+
+		double droll = now_roll - last_roll;
+		double dpitch = now_pitch - last_pitch;
+		double dyaw = now_yaw - last_yaw;
+
+		tf::Quaternion dquat = tf::createQuaternionFromRPY( droll , dpitch , dyaw );
+		geometry_msgs::Quaternion geo_dquat;
+
+		quaternionTFToMsg( dquat , geo_dquat );
+
+		relative_pos_trans.dqx = geo_dquat.x;
+		relative_pos_trans.dqy = geo_dquat.y;
+		relative_pos_trans.dqz = geo_dquat.z;
+		relative_pos_trans.dqw = geo_dquat.w;
+
+		/*
 		relative_pos_trans.dqx = odom_data.pose.pose.orientation.x - _last_odom_data.pose.pose.orientation.x;
 		relative_pos_trans.dqy = odom_data.pose.pose.orientation.y - _last_odom_data.pose.pose.orientation.y;
 		relative_pos_trans.dqz = odom_data.pose.pose.orientation.z - _last_odom_data.pose.pose.orientation.z;
 		relative_pos_trans.dqw = odom_data.pose.pose.orientation.w - _last_odom_data.pose.pose.orientation.w;
 
+		double qw_norm = sqrt( relative_pos_trans.dqx*relative_pos_trans.dqx 
+				     + relative_pos_trans.dqy*relative_pos_trans.dqy 
+				     + relative_pos_trans.dqz*relative_pos_trans.dqz
+				     + relative_pos_trans.dqw*relative_pos_trans.dqw  );
+
+		relative_pos_trans.dqx = relative_pos_trans.dqx / qw_norm;
+		relative_pos_trans.dqy = relative_pos_trans.dqy / qw_norm;
+		relative_pos_trans.dqz = relative_pos_trans.dqz / qw_norm;
+		relative_pos_trans.dqw = relative_pos_trans.dqw / qw_norm;
+		*/
 	}
 
 	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
@@ -299,11 +339,12 @@ namespace semloam{
 		tf::Transform slide_transform;
 		transformMsgToTF( trans_pose , slide_transform );
 
-		pcl_ros::transformPointCloud( FeatureCloud, FeatureCloud, slide_transform );
+		//pcl_ros::transformPointCloud( FeatureCloud, FeatureCloud, slide_transform );
 
 		Eigen::Matrix4f init_slide_matrix;
 
 		pcl_ros::transformAsMatrix( slide_transform , init_slide_matrix );
+		pcl::transformPointCloud( FeatureCloud, FeatureCloud, init_slide_matrix );
 
 		std::cout << "init slide matrix" << std::endl;
 		std::cout << init_slide_matrix << std::endl;
@@ -515,7 +556,7 @@ namespace semloam{
 
 		std::cout << "send current TF data" << std::endl;
 
-		br.sendTransform( tf::StampedTransform( calib_transform, odom_data_time, "map", "laserodometry") );
+		//br.sendTransform( tf::StampedTransform( calib_transform, odom_data_time, "map", "laserodometry") );
 
 		// rewrite laserodometry
 		laserodometry.pose.pose = cur_pose;
@@ -527,6 +568,7 @@ namespace semloam{
 		laserodometry_to_map.setRotation( tf::Quaternion( laserodometry.pose.pose.orientation.x, laserodometry.pose.pose.orientation.y, laserodometry.pose.pose.orientation.z, laserodometry.pose.pose.orientation.w ) );
 		laserodometry_to_map.setOrigin( tf::Vector3( laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z) );
 
+		br.sendTransform( laserodometry_to_map );
 	}
 
 

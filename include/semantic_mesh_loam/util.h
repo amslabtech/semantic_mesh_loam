@@ -7,6 +7,8 @@
 #include<string.h>
 #include <chrono>
 #include<list>
+#include<math.h>
+#include<complex>
 
 namespace semloam
 { 
@@ -19,14 +21,14 @@ namespace semloam
   };
 
   struct pos_trans{
-	  float dx;
-	  float dy;
-	  float dz;
+	  double dx;
+	  double dy;
+	  double dz;
 
-	  float dqx;
-	  float dqy;
-	  float dqz;
-	  float dqw;
+	  double dqx;
+	  double dqy;
+	  double dqz;
+	  double dqw;
   };
 
 }
