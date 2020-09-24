@@ -18,6 +18,8 @@
 #include"pcl_conversions/pcl_conversions.h"
 #include"pcl/segmentation/extract_clusters.h"
 #include"pcl/registration/icp.h"
+#include "tf_conversions/tf_eigen.h"
+
 
 namespace semloam{
 

@@ -10,7 +10,7 @@ int main(int argc, char** argv){
 
 	if(laserodom.setup(node, privateNode)){
 		//Initial config has done
-		std::cout << "aaa" << std::endl;
+		//std::cout << "aaa" << std::endl;
 		laserodom.spin();
 
 	}

@@ -811,7 +811,7 @@ namespace semloam{
 
 		double duration_process = end_sec.toSec() - start_sec.toSec();
 
-		std::cout << "process time: " << duration_process << std::endl;
+		//std::cout << "process time: " << duration_process << std::endl;
 
 	}
 				
