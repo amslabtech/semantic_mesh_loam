@@ -15,6 +15,7 @@
 #include"pcl/features/normal_3d.h"
 //#include"pcl/visualization/cloud_viewer.h"
 #include"nav_msgs/Odometry.h"
+#include"pcl/features/normal_3d_omp.h"
 
 namespace semloam{
 
@@ -140,6 +141,7 @@ namespace semloam{
 
 			void extract_edge_point(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
 			void normal_edge_process(int cluster_num);
+			void normal_edge_process_OMP(int cluster_num);
 			void extract_edge_point_normal(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster, const pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
 			float searchradius;

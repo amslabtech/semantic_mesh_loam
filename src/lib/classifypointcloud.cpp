@@ -498,6 +498,28 @@ namespace semloam{
 		}
 	}
 
+	void SemClassifer::normal_edge_process_OMP(int cluster_num){
+
+		//extracting edge each cluster
+		for(int i=0; i<cluster_num; i++){
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster = clusters[i];
+
+			//Normals
+			pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
+			pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
+
+			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+			tree->setInputCloud(cluster);
+			ne.setInputCloud(cluster);
+			ne.setSearchMethod(tree);
+
+			ne.setRadiusSearch(searchradius);
+			
+			ne.compute(*cloud_normals);
+
+			extract_edge_point_normal(cluster, cloud_normals);
+		}
+	}
 
 
 
@@ -531,7 +553,8 @@ namespace semloam{
 
 		int cluster_num = Clustering(cloudin);
 		if(cluster_num > 0){
-			normal_edge_process(cluster_num);
+			//normal_edge_process(cluster_num);
+			normal_edge_process_OMP(cluster_num);
 			//std::cout << clusters.size() << std::endl;
 		}
 
@@ -604,6 +627,9 @@ namespace semloam{
 	}
 
 	void SemClassifer::process(const pcl::PointCloud<pcl::PointXYZRGB>& laserCloudIn, const Time& scanTime){
+
+		Time start_sec = ros::Time::now();
+		
 		size_t cloudsize = laserCloudIn.size();
 		//std::cout << cloudsize << std::endl
 		pcl::PointXYZRGB point;
@@ -780,6 +806,12 @@ namespace semloam{
 		terrain.clear();
 		pole.clear();
 		trafficsign.clear();
+
+		Time end_sec = ros::Time::now();
+
+		double duration_process = end_sec.toSec() - start_sec.toSec();
+
+		std::cout << "process time: " << duration_process << std::endl;
 
 	}
 				
