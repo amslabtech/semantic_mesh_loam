@@ -210,6 +210,8 @@ namespace semloam{
 
 		FeatureCloud_child = FeatureCloud_child + CloudCentroid;
 
+		//std::cout << FeatureCloud_child.header.frame_id << std::endl;
+
 		//std::cout << "catch centroid data" << std::endl;
 
 		CloudCentroid_checker = true;
@@ -270,6 +272,7 @@ namespace semloam{
 		return checker_in;
 	}
 
+	/*
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -304,8 +307,8 @@ namespace semloam{
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
 
-	}
-	/*
+	}*/
+	
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -351,9 +354,52 @@ namespace semloam{
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
 	}
-	*/
+
+	/*
+	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
+
+		// Set quaternion
+		double x = relative_pos_trans.dqx;
+		double y = relative_pos_trans.dqy;
+		double z = relative_pos_trans.dqz;
+		double w = relative_pos_trans.dqz;
+
+		// Set matrix element quaternion->homogenerous translation matrix
+		double m00 = 1 - 2*y*y - 2*z*z;
+		double m01 = 2*x*y + 2*w*z;
+		double m02 = 2*x+z - 2*w*y;
+		double m03 = relative_pos_trans.dx;
+
+		double m10 = 2*x*y - 2*w*z;
+		double m11 = 1 - 2*x*x - 2*z*z;
+		double m12 = 2*y*z + 2*w*x;
+		double m13 = relative_pos_trans.dy;
+
+		double m20 = 2*x*z + 2*w*y;
+		double m21 = 2*y*z - 2*w*x;
+		double m22 = 1 - 2*x*x - 2*y*y;
+		double m23 = relative_pos_trans.dz;
+
+		double m30 = 0.0;
+		double m31 = 0.0;
+		double m32 = 0.0;
+		double m33 = 1.0;
+
+		//Create Homogenerous translation matrix
+		Eigen::Matrix4f init_slide_matrix;
+		init_slide_matrix << m00, m01, m02, m03,
+				     m10, m11, m12, m13,
+				     m20, m21, m22, m23,
+				     m30, m31, m32, m33;
+
+		pcl::transformPointCloud( FeatureCloud, FeatureCloud, init_slide_matrix );
+
+		return init_slide_matrix;
+	}*/
 
 
+
+	
 	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
 
 		geometry_msgs::Transform trans_pose;
@@ -377,8 +423,10 @@ namespace semloam{
 		pcl_ros::transformAsMatrix( slide_transform , init_slide_matrix );
 		//pcl::transformPointCloud( FeatureCloud, FeatureCloud, init_slide_matrix );
 
-		//std::cout << "init slide matrix" << std::endl;
-		//std::cout << init_slide_matrix << std::endl;
+		std::cout << "init transform" << std::endl;
+		std::cout << trans_pose << std::endl;
+		std::cout << "init slide matrix" << std::endl;
+		std::cout << init_slide_matrix << std::endl;
 
 		return init_slide_matrix;
 	}
@@ -458,6 +506,7 @@ namespace semloam{
 		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener);
 		pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans_child, "laserodometry", velo_scans, listener);
 
+		std::cout << FeatureCloud.header.frame_id << std::endl;
 		//std::cout << "convert coordinate" << std::endl;
 
 	}
@@ -559,7 +608,7 @@ namespace semloam{
 
 
 		*/
-		std::cout << "getting now pose as 4x4 matrix" << std::endl;
+		//std::cout << "getting now pose as 4x4 matrix" << std::endl;
 		Eigen::Matrix4f now_pose = Tm * last_pose;
 
 		/*
@@ -583,6 +632,12 @@ namespace semloam{
 		ori_mat << now_pose(0, 0), now_pose(0, 1), now_pose(0, 2),
 			   now_pose(1, 0), now_pose(1, 1), now_pose(1, 2),
 			   now_pose(2, 0), now_pose(2, 1), now_pose(2, 2);
+
+		//std::cout << "now_pose" << std::endl;
+		//std::cout << now_pose << std::endl;
+
+		//std::cout << "ori_mat" << std::endl;
+		//std::cout << ori_mat << std::endl;
 
 		double angle_x, angle_y, angle_z;
 		
@@ -626,10 +681,10 @@ namespace semloam{
 
 		//br.sendTransform( tf::StampedTransform( calib_transform, odom_data_time, "map", "laserodometry") );
 
-		// rewrite laserodometry
+		//rewrite laserodometry
 		laserodometry.pose.pose = cur_pose;
 
-		
+
 		laserodometry.twist.twist.linear.x = relative_pos_trans.vx;
 		laserodometry.twist.twist.linear.y = relative_pos_trans.vy;
 		laserodometry.twist.twist.linear.z = relative_pos_trans.vz;
@@ -786,7 +841,7 @@ namespace semloam{
 
 	void LaserOdometry::spin(){
 
-		ros::Rate rate(5);
+		ros::Rate rate(10);
 
 		while( ros::ok() ){
 
