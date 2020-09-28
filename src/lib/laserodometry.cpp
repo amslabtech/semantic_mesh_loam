@@ -209,6 +209,7 @@ namespace semloam{
 		pcl::fromROSMsg(*centroiddata, CloudCentroid);
 
 		FeatureCloud_child = FeatureCloud_child + CloudCentroid;
+		FeatureCloud_child.header.frame_id = "laserodometry";
 
 		//std::cout << FeatureCloud_child.header.frame_id << std::endl;
 
@@ -223,6 +224,7 @@ namespace semloam{
 		pcl::fromROSMsg(*edgedata, CloudEdge);
 
 		FeatureCloud_child = FeatureCloud_child + CloudEdge;
+		FeatureCloud_child.header.frame_id = "laserodometry";
 
 		//std::cout << "catch edge data" << std::endl;
 
@@ -240,6 +242,9 @@ namespace semloam{
 
 
 		odom_data = *odomdata;
+
+		std::cout << "odom_data frame id" << std::endl;
+		std::cout << odom_data.header.frame_id << std::endl;
 
 		//std::cout << "catch odom data" << std::endl;
 
@@ -272,7 +277,6 @@ namespace semloam{
 		return checker_in;
 	}
 
-	/*
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -307,8 +311,9 @@ namespace semloam{
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
 
-	}*/
-	
+	}
+
+/*	
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -353,7 +358,80 @@ namespace semloam{
 		relative_pos_trans.vqx = droll / dt;
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
+	}*/
+
+	void LaserOdometry::send_init_slide_tf(){
+
+		geometry_msgs::Pose pos_pose = laserodometry.pose.pose;
+		tf::Quaternion pos_pose_quat;
+
+		quaternionMsgToTF( pos_pose.orientation, pos_pose_quat );
+
+		tf::Quaternion trans_quat( relative_pos_trans.dqx, relative_pos_trans.dqy , relative_pos_trans.dqz , relative_pos_trans.dqw );
+
+		tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat;
+
+		geometry_msgs::Pose init_slide_pose;
+
+		quaternionTFToMsg( init_slide_quat, init_slide_pose.orientation );
+
+		init_slide_pose.position.x = pos_pose.position.x + relative_pos_trans.dx;
+		init_slide_pose.position.y = pos_pose.position.y + relative_pos_trans.dy;
+		init_slide_pose.position.z = pos_pose.position.z + relative_pos_trans.dz;
+
+		geometry_msgs::TransformStamped init_slide_transform;
+
+		init_slide_transform.header.stamp = _last_odom_data_time;// koushinaito, lookuptransform dekinai
+		init_slide_transform.header.frame_id = "map";
+		init_slide_transform.child_frame_id = "init_slide";
+
+		init_slide_transform.transform.translation.x = init_slide_pose.position.x;
+		init_slide_transform.transform.translation.y = init_slide_pose.position.y;
+		init_slide_transform.transform.translation.z = init_slide_pose.position.z;
+
+		init_slide_transform.transform.rotation = init_slide_pose.orientation;
+
+		br.sendTransform( init_slide_transform );
+
+
+
 	}
+
+
+
+
+
+	Eigen::Matrix4f LaserOdometry::new_init_pc_slide(){
+
+		//send tf data between map and init_slide
+		send_init_slide_tf();
+
+		tf::StampedTransform laserodometry_to_init_slide;
+
+		while(true){
+
+			try{
+				listener.lookupTransform("laserodometry", "init_slide", _last_odom_data_time, laserodometry_to_init_slide);
+
+				ROS_INFO("GET TRANSFORM LASERODOMETRY FRAME AND INIT_SLIDE FRAME IN INIT_PC_SLIDE");
+				break;
+			}
+			catch(tf::TransformException ex){
+				ROS_ERROR("%s", ex.what() );
+				ros::Duration(0.1).sleep();
+			}
+		}
+
+		Eigen::Matrix4f init_slide_matrix;
+
+		pcl_ros::transformAsMatrix( laserodometry_to_init_slide , init_slide_matrix );
+
+		return init_slide_matrix;
+
+
+	}
+
+
 
 	/*
 	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
@@ -397,9 +475,7 @@ namespace semloam{
 		return init_slide_matrix;
 	}*/
 
-
-
-	
+	/*	
 	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
 
 		geometry_msgs::Transform trans_pose;
@@ -430,6 +506,72 @@ namespace semloam{
 
 		return init_slide_matrix;
 	}
+	*/
+
+	Eigen::Matrix4f LaserOdometry::new_pcl_pc_slide(){
+
+		pcl::PointCloud<pcl::PointXYZRGB> icp_featurecloud;
+		pcl::PointCloud<pcl::PointXYZRGB> icp_featurecloud_last;
+
+		icp_featurecloud = FeatureCloud_child;
+		icp_featurecloud.header.frame_id = "init_slide";
+
+		icp_featurecloud_last = _lastFeatureCloud_child;
+		icp_featurecloud_last.header.frame_id = "init_slide";
+
+		tf::StampedTransform init_slide_to_laserodometry;
+
+		while(true){
+
+			try{
+				listener.lookupTransform("init_slide", "laserodometry", _last_odom_data_time, init_slide_to_laserodometry);
+
+				ROS_INFO("GET TRANSFORM INIT_SLIDE FRAME AND LASERODOMETRY FRAME IN INIT_PC_SLIDE");
+				break;
+			}
+			catch(tf::TransformException ex){
+				ROS_ERROR("%s", ex.what() );
+				ros::Duration(0.1).sleep();
+			}
+		}
+
+		//slide last feature cloud to get 4x4 matrix in init slide coordinate by icp program
+		pcl_ros::transformPointCloud( icp_featurecloud_last , icp_featurecloud_last , init_slide_to_laserodometry );
+
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr FeatureCloud_Ptr(new pcl::PointCloud<pcl::PointXYZRGB>( icp_featurecloud ) );
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastFeatureCloud_Ptr(new pcl::PointCloud<pcl::PointXYZRGB>( icp_featurecloud_last ) );
+
+		//Set the input source(current scan) and target(previous scan) pointcloud
+		//icp.setInputCloud( FeatureCloud_Ptr); // only ::Ptr
+		//std::cout << "set source and target frame" << std::endl;
+		icp.setInputSource( FeatureCloud_Ptr );
+		icp.setInputTarget( _lastFeatureCloud_Ptr );
+
+		// Set the max correspondence distance to 15cm (e.g., correspondences with higher distances will be ignored)
+		//std::cout << "set ICP parameter" << std::endl;
+		icp.setMaxCorrespondenceDistance(MaxCorrespondDistance);
+
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations(MaximumIterations);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon(TransformationEpsilon);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+
+		icp.align( tmp_pc_stored );
+
+		//std::cout << "Do ICP" << std::endl;
+		Eigen::Matrix4f pcl_slide_matrix = icp.getFinalTransformation();
+
+		//std::cout <<"PCL Matrix" << std::endl;
+		//std::cout << pcl_slide_matrix << std::endl;
+
+		return pcl_slide_matrix;
+	}
+
+
 
 	Eigen::Matrix4f LaserOdometry::pcl_pc_slide(){
 
@@ -558,20 +700,11 @@ namespace semloam{
 		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener );
 
 		_lastFeatureCloud = FeatureCloud;
+		_lastFeatureCloud_child = FeatureCloud_child;
 		FeatureCloud.clear();
 		return true;
 
 	}
-
-
-	/*
-	void LaserOdometry::send_tf_data(Eigen::Matrix4f Tm){
-
-		geometry_msgs::Pose cur_pose = laserodometry.pose.pose;
-
-	}
-	*/
-
 
 	void LaserOdometry::send_tf_data(Eigen::Matrix4f Tm){
 
@@ -775,6 +908,8 @@ namespace semloam{
 		CloudEdge.clear();
 
 		_lastFeatureCloud = FeatureCloud;
+		_lastFeatureCloud_child = FeatureCloud_child;
+
 		FeatureCloud.clear();
 		FeatureCloud_child.clear();
 
@@ -818,10 +953,12 @@ namespace semloam{
 		convert_coordinate_of_pc();
 
 		//Calculate init slide as homogenerous transformation matrix by odometry
-		Eigen::Matrix4f init_slide_matrix = init_pc_slide();
+		//Eigen::Matrix4f init_slide_matrix = init_pc_slide();
+		Eigen::Matrix4f init_slide_matrix = new_init_pc_slide();
 
 		//Calculate ICP slide by pcl's Iterative Closest Point module
-		Eigen::Matrix4f pcl_slide_matrix = pcl_pc_slide();
+		//Eigen::Matrix4f pcl_slide_matrix = pcl_pc_slide();
+		Eigen::Matrix4f pcl_slide_matrix = new_pcl_pc_slide();
 
 		//Calculate calibrated laserodometry as homogenerous transformation matrix
 		Eigen::Matrix4f laserodometry_trans_matrix = pcl_slide_matrix * init_slide_matrix;

@@ -53,7 +53,13 @@ namespace semloam{
 
 			Eigen::Matrix4f init_pc_slide();
 
+			Eigen::Matrix4f new_init_pc_slide();
+
+			void send_init_slide_tf();
+
 			Eigen::Matrix4f pcl_pc_slide();
+
+			Eigen::Matrix4f new_pcl_pc_slide();
 
 			void send_tf_data(Eigen::Matrix4f Tm);
 
@@ -94,6 +100,7 @@ namespace semloam{
 			//pcl::PointCloud<pcl::PointXYZRGB> _lastCloudCentroid;
 			//pcl::PointCloud<pcl::PointXYZRGB> _lastCloudEdge;
 			pcl::PointCloud<pcl::PointXYZRGB> _lastFeatureCloud;
+			pcl::PointCloud<pcl::PointXYZRGB> _lastFeatureCloud_child;
 
 			pcl::PointCloud<pcl::PointXYZRGB> tmp_pc_stored;
 
