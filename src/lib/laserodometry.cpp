@@ -277,6 +277,7 @@ namespace semloam{
 		return checker_in;
 	}
 
+	/*
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -311,9 +312,8 @@ namespace semloam{
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
 
-	}
-
-/*	
+	}*/
+	
 	void LaserOdometry::get_relative_trans(){
 
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
@@ -358,7 +358,7 @@ namespace semloam{
 		relative_pos_trans.vqx = droll / dt;
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
-	}*/
+	}
 
 	void LaserOdometry::send_init_slide_tf(){
 
@@ -369,7 +369,7 @@ namespace semloam{
 
 		tf::Quaternion trans_quat( relative_pos_trans.dqx, relative_pos_trans.dqy , relative_pos_trans.dqz , relative_pos_trans.dqw );
 
-		tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat;
+		tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat /** inverse(trans_quat)*/;
 
 		geometry_msgs::Pose init_slide_pose;
 
@@ -725,7 +725,7 @@ namespace semloam{
 		tf::Vector3 row1 = rota.getRow(1);
 		tf::Vector3 row2 = rota.getRow(2);
 
-		
+		/*
 		last_pose <<               row0.getX(), row0.getY(), row0.getZ(), place.x(),
 				           row1.getX(), row1.getY(), row1.getZ(), place.y(),
 				           row2.getX(), row2.getY(), row2.getZ(), place.z(),
@@ -733,14 +733,14 @@ namespace semloam{
 
 		
 
-		/*
+		*/
 		last_pose <<               rota[0][0], rota[0][1], rota[0][2], place[0],
 				           rota[1][0], rota[1][1], rota[1][2], place[1],
 				           rota[2][0], rota[2][1], rota[2][2], place[2],
 				                  0.0,        0.0,        0.0,     1.0;
 
 
-		*/
+		
 		//std::cout << "getting now pose as 4x4 matrix" << std::endl;
 		Eigen::Matrix4f now_pose = Tm * last_pose;
 
@@ -757,7 +757,6 @@ namespace semloam{
 
 		geometry_msgs::Pose cur_pose;
 		
-		//cur_pose.orientation = quat;
 		quaternionTFToMsg( quat , cur_pose.orientation );
 		*/
 
