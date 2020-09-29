@@ -319,20 +319,14 @@ namespace semloam{
 	
 	void LaserOdometry::get_relative_trans(){
 
-		/*
+		
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
 		relative_pos_trans.dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
 		relative_pos_trans.dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
 
-		*/
-
 		tf::Quaternion now_quat, last_quat;
 
 		double dt = odom_data_time.toSec() - _last_odom_data_time.toSec();
-
-		relative_pos_trans.dx = _last_odom_data.twist.twist.linear.x * dt;
-		relative_pos_trans.dy = _last_odom_data.twist.twist.linear.y * dt;
-		relative_pos_trans.dz = _last_odom_data.twist.twist.linear.z * dt;
 
 		double now_roll, now_pitch, now_yaw;
 		double last_roll, last_pitch, last_yaw;
@@ -377,8 +371,41 @@ namespace semloam{
 		relative_pos_trans.vqx = droll / dt;
 		relative_pos_trans.vqy = dpitch/ dt;
 		relative_pos_trans.vqz = dyaw  / dt;
+
+		while(true){
+
+			try{
+				listener.waitForTransform("map", "velodyne", odom_data_time, ros::Duration(1.0) );
+				listener.lookupTransform("velodyne", _last_odom_data_time, "velodyne", odom_data_time, "velodyne", init_odometry_slide);
+				ROS_INFO("GET TRANSFORM VELO FRAME AND VELODYNE FRAME IN GET_RELATIVE_TRANS");
+				break;
+			}
+			catch(tf::TransformException ex){
+				ROS_ERROR("%s", ex.what() );
+				ros::Duration(1.0).sleep();
+			}
+		}
+
 	}
 
+
+/*	
+	void LaserOdometry::send_init_slide_tf(){
+
+		geometry_msgs::Pose pos_pose = laserodometry.pose.pose;
+		tf::Transform pos_pose_tf; //transform between map and laserodometry
+
+		pos_pose_tf.setRotation( tf::Quaternion(pos_pose.orientation.x, pos_pose.orientation.y, pos_pose.orientation.z, pos_pose.orientation.w ) );
+		pos_pose_tf.setOrigin( tf::Vector3(pos_pose.position.x, pos_pose.position.y, pos_pose.position.z) );
+
+
+		tf::Transform map_to_init_slide = pos_pose_tf * init_odometry_slide;
+
+		br.sendTransform( tf::StampedTransform(map_to_init_slide, odom_data_time, "map", "init_slide"));
+	}
+	*/
+
+		
 	void LaserOdometry::send_init_slide_tf(){
 
 		geometry_msgs::Pose pos_pose = laserodometry.pose.pose;
@@ -397,7 +424,7 @@ namespace semloam{
 
 		//tf::Quaternion trans_quat( relative_pos_trans.dqx, relative_pos_trans.dqy , relative_pos_trans.dqz , relative_pos_trans.dqw );
 
-		//tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat /** inverse(trans_quat)*/;
+		//tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat;
 		//init_slide_quat.normalize();
 
 		geometry_msgs::PoseStamped init_slide_pose;
@@ -413,10 +440,9 @@ namespace semloam{
 
 		_pub_init_slide_pose.publish(init_slide_pose);
 
-		/*
-		std::cout << "init_slide_pose" << std::endl;
-		std::cout << init_slide_pose << std::endl;
-		*/
+		//std::cout << "init_slide_pose" << std::endl;
+		//std::cout << init_slide_pose << std::endl;
+		
 
 		geometry_msgs::TransformStamped init_slide_transform;
 
@@ -431,14 +457,7 @@ namespace semloam{
 		init_slide_transform.transform.rotation = init_slide_pose.pose.orientation;
 
 		br.sendTransform( init_slide_transform );
-
-
-
 	}
-
-
-
-
 
 	Eigen::Matrix4f LaserOdometry::new_init_pc_slide(){
 
@@ -470,83 +489,6 @@ namespace semloam{
 
 
 	}
-
-
-
-	/*
-	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
-
-		// Set quaternion
-		double x = relative_pos_trans.dqx;
-		double y = relative_pos_trans.dqy;
-		double z = relative_pos_trans.dqz;
-		double w = relative_pos_trans.dqz;
-
-		// Set matrix element quaternion->homogenerous translation matrix
-		double m00 = 1 - 2*y*y - 2*z*z;
-		double m01 = 2*x*y + 2*w*z;
-		double m02 = 2*x+z - 2*w*y;
-		double m03 = relative_pos_trans.dx;
-
-		double m10 = 2*x*y - 2*w*z;
-		double m11 = 1 - 2*x*x - 2*z*z;
-		double m12 = 2*y*z + 2*w*x;
-		double m13 = relative_pos_trans.dy;
-
-		double m20 = 2*x*z + 2*w*y;
-		double m21 = 2*y*z - 2*w*x;
-		double m22 = 1 - 2*x*x - 2*y*y;
-		double m23 = relative_pos_trans.dz;
-
-		double m30 = 0.0;
-		double m31 = 0.0;
-		double m32 = 0.0;
-		double m33 = 1.0;
-
-		//Create Homogenerous translation matrix
-		Eigen::Matrix4f init_slide_matrix;
-		init_slide_matrix << m00, m01, m02, m03,
-				     m10, m11, m12, m13,
-				     m20, m21, m22, m23,
-				     m30, m31, m32, m33;
-
-		pcl::transformPointCloud( FeatureCloud, FeatureCloud, init_slide_matrix );
-
-		return init_slide_matrix;
-	}*/
-
-	/*	
-	Eigen::Matrix4f LaserOdometry::init_pc_slide(){
-
-		geometry_msgs::Transform trans_pose;
-		
-		trans_pose.translation.x = relative_pos_trans.dx;
-		trans_pose.translation.y = relative_pos_trans.dy;
-		trans_pose.translation.z = relative_pos_trans.dz;
-
-		trans_pose.rotation.x = relative_pos_trans.dqx;
-		trans_pose.rotation.y = relative_pos_trans.dqy;
-		trans_pose.rotation.z = relative_pos_trans.dqz;
-		trans_pose.rotation.w = relative_pos_trans.dqw;
-
-		tf::Transform slide_transform;
-		transformMsgToTF( trans_pose , slide_transform );
-
-		pcl_ros::transformPointCloud( FeatureCloud, FeatureCloud, slide_transform );
-
-		Eigen::Matrix4f init_slide_matrix;
-
-		pcl_ros::transformAsMatrix( slide_transform , init_slide_matrix );
-		//pcl::transformPointCloud( FeatureCloud, FeatureCloud, init_slide_matrix );
-
-		std::cout << "init transform" << std::endl;
-		std::cout << trans_pose << std::endl;
-		std::cout << "init slide matrix" << std::endl;
-		std::cout << init_slide_matrix << std::endl;
-
-		return init_slide_matrix;
-	}
-	*/
 
 	Eigen::Matrix4f LaserOdometry::new_pcl_pc_slide(){
 
@@ -984,9 +926,9 @@ namespace semloam{
 		if( status == false )
 			return;
 
-		get_relative_trans();
-
 		get_tf_data();
+
+		get_relative_trans();
 
 		// Convert point cloud's coordinate velodyne frame to map frame
 		convert_coordinate_of_pc();

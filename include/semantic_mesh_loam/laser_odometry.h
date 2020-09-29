@@ -127,6 +127,8 @@ namespace semloam{
 			tf::StampedTransform velo_to_map;
 			tf::StampedTransform laserodometry_to_map;
 
+			tf::StampedTransform init_odometry_slide;
+
 			tf::TransformBroadcaster br; //publish tf data between map and laserodometry
 
 			Time velo_scans_time;
