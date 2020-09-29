@@ -184,6 +184,9 @@ namespace semloam{
 			("/edge_points", 2, &LaserOdometry::edge_callback, this);
 		_subOdometry = node.subscribe<nav_msgs::Odometry>
 			("/odometry2", 2, &LaserOdometry::odometry_callback, this);
+		
+		_pub_init_slide_pose = node.advertise<geometry_msgs::PoseStamped>
+			("/init_slide_pose", 10);
 
 		std::cout << "End set up Laser Odometry" << std::endl;
 
@@ -316,12 +319,20 @@ namespace semloam{
 	
 	void LaserOdometry::get_relative_trans(){
 
+		/*
 		relative_pos_trans.dx = odom_data.pose.pose.position.x - _last_odom_data.pose.pose.position.x;
 		relative_pos_trans.dy = odom_data.pose.pose.position.y - _last_odom_data.pose.pose.position.y;
 		relative_pos_trans.dz = odom_data.pose.pose.position.z - _last_odom_data.pose.pose.position.z;
 
+		*/
 
 		tf::Quaternion now_quat, last_quat;
+
+		double dt = odom_data_time.toSec() - _last_odom_data_time.toSec();
+
+		relative_pos_trans.dx = _last_odom_data.twist.twist.linear.x * dt;
+		relative_pos_trans.dy = _last_odom_data.twist.twist.linear.y * dt;
+		relative_pos_trans.dz = _last_odom_data.twist.twist.linear.z * dt;
 
 		double now_roll, now_pitch, now_yaw;
 		double last_roll, last_pitch, last_yaw;
@@ -339,6 +350,16 @@ namespace semloam{
 		double dpitch = now_pitch - last_pitch;
 		double dyaw = now_yaw - last_yaw;
 
+		relative_pos_trans.droll = droll;
+		relative_pos_trans.dpitch = dpitch;
+		relative_pos_trans.dyaw = dyaw;
+
+		/*
+		std::cout <<"droll" << droll << std::endl;
+		std::cout <<"dpitch" << dpitch << std::endl;
+		std::cout << "dyaw" << dyaw << std::endl;
+		*/
+
 		tf::Quaternion dquat = tf::createQuaternionFromRPY( droll , dpitch , dyaw );
 		geometry_msgs::Quaternion geo_dquat;
 
@@ -348,8 +369,6 @@ namespace semloam{
 		relative_pos_trans.dqy = geo_dquat.y;
 		relative_pos_trans.dqz = geo_dquat.z;
 		relative_pos_trans.dqw = geo_dquat.w;
-
-		double dt = odom_data_time.toSec() - _last_odom_data_time.toSec();
 
 		relative_pos_trans.vx = relative_pos_trans.dx / dt;
 		relative_pos_trans.vy = relative_pos_trans.dy / dt;
@@ -367,17 +386,37 @@ namespace semloam{
 
 		quaternionMsgToTF( pos_pose.orientation, pos_pose_quat );
 
-		tf::Quaternion trans_quat( relative_pos_trans.dqx, relative_pos_trans.dqy , relative_pos_trans.dqz , relative_pos_trans.dqw );
+		double cur_roll, cur_pitch, cur_yaw;
+		tf::Matrix3x3( pos_pose_quat ).getRPY(cur_roll, cur_pitch, cur_yaw );
 
-		tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat /** inverse(trans_quat)*/;
+		cur_roll = cur_roll + relative_pos_trans.droll;
+		cur_pitch = cur_pitch + relative_pos_trans.dpitch;
+		cur_yaw = cur_yaw + relative_pos_trans.dyaw;
 
-		geometry_msgs::Pose init_slide_pose;
+		tf::Quaternion init_slide_quat = tf::createQuaternionFromRPY( cur_roll, cur_pitch, cur_yaw);
 
-		quaternionTFToMsg( init_slide_quat, init_slide_pose.orientation );
+		//tf::Quaternion trans_quat( relative_pos_trans.dqx, relative_pos_trans.dqy , relative_pos_trans.dqz , relative_pos_trans.dqw );
 
-		init_slide_pose.position.x = pos_pose.position.x + relative_pos_trans.dx;
-		init_slide_pose.position.y = pos_pose.position.y + relative_pos_trans.dy;
-		init_slide_pose.position.z = pos_pose.position.z + relative_pos_trans.dz;
+		//tf::Quaternion init_slide_quat = trans_quat * pos_pose_quat /** inverse(trans_quat)*/;
+		//init_slide_quat.normalize();
+
+		geometry_msgs::PoseStamped init_slide_pose;
+
+		init_slide_pose.header.frame_id = "map";
+		init_slide_pose.header.stamp = _last_odom_data_time;
+
+		quaternionTFToMsg( init_slide_quat, init_slide_pose.pose.orientation );
+
+		init_slide_pose.pose.position.x = pos_pose.position.x + relative_pos_trans.dx;
+		init_slide_pose.pose.position.y = pos_pose.position.y + relative_pos_trans.dy;
+		init_slide_pose.pose.position.z = pos_pose.position.z + relative_pos_trans.dz;
+
+		_pub_init_slide_pose.publish(init_slide_pose);
+
+		/*
+		std::cout << "init_slide_pose" << std::endl;
+		std::cout << init_slide_pose << std::endl;
+		*/
 
 		geometry_msgs::TransformStamped init_slide_transform;
 
@@ -385,11 +424,11 @@ namespace semloam{
 		init_slide_transform.header.frame_id = "map";
 		init_slide_transform.child_frame_id = "init_slide";
 
-		init_slide_transform.transform.translation.x = init_slide_pose.position.x;
-		init_slide_transform.transform.translation.y = init_slide_pose.position.y;
-		init_slide_transform.transform.translation.z = init_slide_pose.position.z;
+		init_slide_transform.transform.translation.x = init_slide_pose.pose.position.x;
+		init_slide_transform.transform.translation.y = init_slide_pose.pose.position.y;
+		init_slide_transform.transform.translation.z = init_slide_pose.pose.position.z;
 
-		init_slide_transform.transform.rotation = init_slide_pose.orientation;
+		init_slide_transform.transform.rotation = init_slide_pose.pose.orientation;
 
 		br.sendTransform( init_slide_transform );
 
@@ -411,6 +450,7 @@ namespace semloam{
 		while(true){
 
 			try{
+				listener.waitForTransform("laserodometry", "init_slide", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("laserodometry", "init_slide", _last_odom_data_time, laserodometry_to_init_slide);
 
 				ROS_INFO("GET TRANSFORM LASERODOMETRY FRAME AND INIT_SLIDE FRAME IN INIT_PC_SLIDE");
@@ -681,6 +721,7 @@ namespace semloam{
 
 		while(true){
 			try{
+				listener.waitForTransform("map", "laserodometry", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
 				//listener.lookupTransform("map", "laserodometry", _last_odom_data_time, listener);
 				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN INITIALIZATION");
@@ -720,12 +761,12 @@ namespace semloam{
 
 		Eigen::Matrix4f last_pose;
 
-		
+		/*
 		tf::Vector3 row0 = rota.getRow(0);
 		tf::Vector3 row1 = rota.getRow(1);
 		tf::Vector3 row2 = rota.getRow(2);
 
-		/*
+		
 		last_pose <<               row0.getX(), row0.getY(), row0.getZ(), place.x(),
 				           row1.getX(), row1.getY(), row1.getZ(), place.y(),
 				           row2.getX(), row2.getY(), row2.getZ(), place.z(),
@@ -738,10 +779,9 @@ namespace semloam{
 				           rota[1][0], rota[1][1], rota[1][2], place[1],
 				           rota[2][0], rota[2][1], rota[2][2], place[2],
 				                  0.0,        0.0,        0.0,     1.0;
-
-
-		
-		//std::cout << "getting now pose as 4x4 matrix" << std::endl;
+		std::cout << "last_pose" << std::endl;
+		std::cout << last_pose << std::endl;
+	//std::cout << "getting now pose as 4x4 matrix" << std::endl;
 		Eigen::Matrix4f now_pose = Tm * last_pose;
 
 		/*

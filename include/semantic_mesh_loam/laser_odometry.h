@@ -153,6 +153,8 @@ namespace semloam{
 			//ros::Publisher _pubFeaturePoints3;
 			ros::Publisher _pubVelodynePoints3;
 
+			ros::Publisher _pub_init_slide_pose;
+
 			ros::Subscriber _subCentroid;
 			ros::Subscriber _subEdge;
 			ros::Subscriber _subVelodynePoints;

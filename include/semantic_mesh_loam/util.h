@@ -30,6 +30,10 @@ namespace semloam
 	  double dqz;
 	  double dqw;
 
+	  double droll;
+	  double dpitch;
+	  double dyaw;
+
 	  double vx;
 	  double vy;
 	  double vz;
