@@ -674,7 +674,7 @@ namespace semloam{
 		
 		if(unlabeled.size() != 0){
 			//std::cout << "unlabeled" << unlabeled.size() <<std::endl;
-			//extract_centroid(unlabeled);
+			extract_centroid(unlabeled);
 		}
 
 		if(outlier.size() !=0 ){
@@ -708,15 +708,15 @@ namespace semloam{
 		}
 
 		if(person.size() != 0){
-			extract_centroid(person);
+			//extract_centroid(person);
 		}
 
 		if(bicyclist.size() != 0){
-			extract_centroid(bicyclist);
+			//extract_centroid(bicyclist);
 		}
 
 		if(motorcyclist.size() != 0){
-			extract_centroid(motorcyclist);
+			//extract_centroid(motorcyclist);
 		}
 
 		if(road.size() != 0){
@@ -753,11 +753,11 @@ namespace semloam{
 		}
 
 		if(vegetation.size() != 0){
-			extract_centroid(vegetation);
+			//extract_centroid(vegetation);
 		}
 
 		if(trunk.size() != 0){
-			//extract_centroid(trunk);
+			extract_centroid(trunk);
 		}
 
 		if(terrain.size() != 0){
