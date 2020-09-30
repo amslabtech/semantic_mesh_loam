@@ -246,8 +246,8 @@ namespace semloam{
 
 		odom_data = *odomdata;
 
-		std::cout << "odom_data frame id" << std::endl;
-		std::cout << odom_data.header.frame_id << std::endl;
+		//std::cout << "odom_data frame id" << std::endl;
+		//std::cout << odom_data.header.frame_id << std::endl;
 
 		//std::cout << "catch odom data" << std::endl;
 
@@ -343,6 +343,10 @@ namespace semloam{
 		double droll = now_roll - last_roll;
 		double dpitch = now_pitch - last_pitch;
 		double dyaw = now_yaw - last_yaw;
+		
+		//double droll = atan2( sin(now_roll - last_roll), cos(now_roll - last_roll) );
+		//double dpitch = atan2( sin(now_pitch - last_pitch), cos(now_pitch - last_pitch));
+		//double dyaw = atan2( sin(now_yaw - last_yaw) , cos(now_yaw - last_yaw) );
 
 		relative_pos_trans.droll = droll;
 		relative_pos_trans.dpitch = dpitch;
@@ -376,7 +380,7 @@ namespace semloam{
 
 			try{
 				listener.waitForTransform("map", "velodyne", odom_data_time, ros::Duration(1.0) );
-				listener.lookupTransform("velodyne", _last_odom_data_time, "velodyne", odom_data_time, "velodyne", init_odometry_slide);
+				listener.lookupTransform("velodyne", _last_odom_data_time, "velodyne", odom_data_time, "map", init_odometry_slide);
 				ROS_INFO("GET TRANSFORM VELO FRAME AND VELODYNE FRAME IN GET_RELATIVE_TRANS");
 				break;
 			}
@@ -387,9 +391,7 @@ namespace semloam{
 		}
 
 	}
-
-
-/*	
+	
 	void LaserOdometry::send_init_slide_tf(){
 
 		geometry_msgs::Pose pos_pose = laserodometry.pose.pose;
@@ -401,11 +403,11 @@ namespace semloam{
 
 		tf::Transform map_to_init_slide = pos_pose_tf * init_odometry_slide;
 
-		br.sendTransform( tf::StampedTransform(map_to_init_slide, odom_data_time, "map", "init_slide"));
+		br.sendTransform( tf::StampedTransform(map_to_init_slide, _last_odom_data_time, "map", "init_slide"));
 	}
-	*/
+	
 
-		
+/*	
 	void LaserOdometry::send_init_slide_tf(){
 
 		geometry_msgs::Pose pos_pose = laserodometry.pose.pose;
@@ -458,6 +460,7 @@ namespace semloam{
 
 		br.sendTransform( init_slide_transform );
 	}
+	*/
 
 	Eigen::Matrix4f LaserOdometry::new_init_pc_slide(){
 
@@ -506,6 +509,7 @@ namespace semloam{
 		while(true){
 
 			try{
+				listener.waitForTransform("init_slide", "laserodometry", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("init_slide", "laserodometry", _last_odom_data_time, init_slide_to_laserodometry);
 
 				ROS_INFO("GET TRANSFORM INIT_SLIDE FRAME AND LASERODOMETRY FRAME IN INIT_PC_SLIDE");
@@ -627,10 +631,10 @@ namespace semloam{
 
 		//std::cout << "Transform coordinate" << std::endl;
 		
-		pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener);
-		pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans_child, "laserodometry", velo_scans, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, FeatureCloud_child, "laserodometry", FeatureCloud, listener);
+		//pcl_ros::transformPointCloud("map", _last_odom_data_time, velo_scans_child, "laserodometry", velo_scans, listener);
 
-		std::cout << FeatureCloud.header.frame_id << std::endl;
+		//std::cout << FeatureCloud.header.frame_id << std::endl;
 		//std::cout << "convert coordinate" << std::endl;
 
 	}
@@ -721,10 +725,10 @@ namespace semloam{
 				           rota[1][0], rota[1][1], rota[1][2], place[1],
 				           rota[2][0], rota[2][1], rota[2][2], place[2],
 				                  0.0,        0.0,        0.0,     1.0;
-		std::cout << "last_pose" << std::endl;
-		std::cout << last_pose << std::endl;
+		//std::cout << "last_pose" << std::endl;
+		//std::cout << last_pose << std::endl;
 	//std::cout << "getting now pose as 4x4 matrix" << std::endl;
-		Eigen::Matrix4f now_pose = Tm * last_pose;
+		Eigen::Matrix4f now_pose = last_pose * Tm;
 
 		/*
 		tf::Matrix3x3 orientation_mat(
@@ -789,9 +793,9 @@ namespace semloam{
 		tf::Transform calib_transform;
 		poseMsgToTF( cur_pose , calib_transform );
 
-		std::cout << cur_pose << std::endl;
+		//std::cout << cur_pose << std::endl;
 
-		std::cout << "send current TF data" << std::endl;
+		//std::cout << "send current TF data" << std::endl;
 
 		//br.sendTransform( tf::StampedTransform( calib_transform, odom_data_time, "map", "laserodometry") );
 
@@ -942,8 +946,8 @@ namespace semloam{
 		Eigen::Matrix4f pcl_slide_matrix = new_pcl_pc_slide();
 
 		//Calculate calibrated laserodometry as homogenerous transformation matrix
-		Eigen::Matrix4f laserodometry_trans_matrix = pcl_slide_matrix * init_slide_matrix;
-		//Eigen::Matrix4f laserodometry_trans_matrix = ( pcl_slide_matrix * init_slide_matrix.inverse() );
+		Eigen::Matrix4f laserodometry_trans_matrix = init_slide_matrix * pcl_slide_matrix;
+		//Eigen::Matrix4f laserodometry_trans_matrix = init_slide_matrix;
 
 		// Calculate calibrated odometry data and publish tf data
 		send_tf_data(laserodometry_trans_matrix);

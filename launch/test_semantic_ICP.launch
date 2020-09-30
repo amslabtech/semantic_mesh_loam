@@ -6,7 +6,7 @@
 
 	<node pkg="semantic_mesh_loam" type="laser_odometry" name="laser_odometry" output="screen">
 		<param name="systemdelay" value="50" type="int"/>
-		<param name="MaxCorrespondDistance" value="0.15" type="double"/>
+		<param name="MaxCorrespondDistance" value="0.40" type="double"/>
 	</node>
 
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />
