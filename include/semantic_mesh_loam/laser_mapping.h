@@ -40,6 +40,25 @@ namespace semloam{
 
 			void spin();
 
+			void process(int counter);
+
+			void get_tf_data();
+
+			void convert_coordinate_of_pc();
+
+			void classify_pointcloud();
+
+			bool classify(const pcl::PointXYZRGB& point, const color_data& color_id);
+
+			void reset_common_cloud();
+
+			void reset_semantic_cloud();
+
+			void do_voxel_grid();
+
+			void publish_pointcloud();
+
+			void pointcloud_to_pcd();
 
 		private:
 			ros::Subscriber _sub_odometry;
@@ -47,13 +66,58 @@ namespace semloam{
 			ros::Subscriber _sub_centroid;
 			ros::Subscriber _sub_edge;
 
+			int scan_counter = 10; //Do voxel grid extraction per scan_counter
+
+			tf::TransformListener listener;
+			tf::StampedTransform map_to_laserodometry;
+
 			pcl::PointCloud<pcl::PointXYZRGB> velo_scans;
 			pcl::PointCloud<pcl::PointXYZRGB> cloud_centroid;
 			pcl::PointCloud<pcl::PointXYZRGB> cloud_edge;
 
+			const size_t velo_scan_size = 100000;
+			const size_t feature_scan_size = 1000;
+
+			Time odom_time;
+
 			nav_msgs::Odometry odom_data;
 
+			bool velo_checker = false;
+			bool cent_checker = false;
+			bool edge_checker = false;
+			bool odom_checker = false;
 
+                        pcl::PointCloud<pcl::PointXYZRGB> unlabeled;
+                        pcl::PointCloud<pcl::PointXYZRGB> outlier;
+                        pcl::PointCloud<pcl::PointXYZRGB> car;
+                        pcl::PointCloud<pcl::PointXYZRGB> bicycle;
+                        pcl::PointCloud<pcl::PointXYZRGB> bus;
+                        pcl::PointCloud<pcl::PointXYZRGB> motorcycle;
+                        pcl::PointCloud<pcl::PointXYZRGB> onrails;
+                        pcl::PointCloud<pcl::PointXYZRGB> truck;
+                        pcl::PointCloud<pcl::PointXYZRGB> othervehicle;
+                        pcl::PointCloud<pcl::PointXYZRGB> person;
+                        pcl::PointCloud<pcl::PointXYZRGB> bicyclist;
+                        pcl::PointCloud<pcl::PointXYZRGB> motorcyclist;
+                        pcl::PointCloud<pcl::PointXYZRGB> road;
+                        pcl::PointCloud<pcl::PointXYZRGB> parking;
+                        pcl::PointCloud<pcl::PointXYZRGB> sidewalk;
+                        pcl::PointCloud<pcl::PointXYZRGB> otherground;
+                        pcl::PointCloud<pcl::PointXYZRGB> building;
+                        pcl::PointCloud<pcl::PointXYZRGB> fence;
+                        pcl::PointCloud<pcl::PointXYZRGB> otherstructure;
+                        pcl::PointCloud<pcl::PointXYZRGB> lanemarking;
+                        pcl::PointCloud<pcl::PointXYZRGB> vegetation;
+                        pcl::PointCloud<pcl::PointXYZRGB> trunk;
+                        pcl::PointCloud<pcl::PointXYZRGB> terrain;
+                        pcl::PointCloud<pcl::PointXYZRGB> pole;
+                        pcl::PointCloud<pcl::PointXYZRGB> trafficsign;
+
+			const size_t pc_size_big = 100000;
+			const size_t pc_size_mid =  50000;
+			const size_t pc_size_min =  10000;
+
+	};
 }
 
 #endif
