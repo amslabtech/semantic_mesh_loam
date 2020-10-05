@@ -16,9 +16,9 @@ namespace semloam{
 		onrails.reserve(pc_size_min);
 		truck.reserve(pc_size_mid);
 		othervehicle.reserve(pc_size_mid);
-		person.reserve(pc_size_min);
-		bicyclist.reserve(pc_size_min);
-		motorcyclist.reserve(pc_size_min);
+		//person.reserve(pc_size_min);
+		//bicyclist.reserve(pc_size_min);
+		//motorcyclist.reserve(pc_size_min);
 		road.reserve(pc_size_big);
 		parking.reserve(pc_size_mid);
 		sidewalk.reserve(pc_size_mid);
@@ -33,7 +33,7 @@ namespace semloam{
 		pole.reserve(pc_size_min);
 		trafficsign.reserve(pc_size_min);
 
-
+		pc_map_cloud.reserve( pc_map_cloud_size );
 
 	}
 
@@ -91,19 +91,251 @@ namespace semloam{
 		_sub_centroid = node.subscribe<sensor_msgs::PointCloud2>
 			("/centroid_point_last", 2, &LaserMapping::centroid_callback, this);
 
+		_pub_pc = node.advertise<sensor_msgs::PointCloud2>("/final_pointcloud",1);
+		_pub_odom = node.advertise<nav_msgs::Odometry>("/final_odometry",10);
 
 		std::cout << "Set ros::Subscribe parameter" << std::endl;
 
 		float fparam;
 		int iparam;
 
-		if( privateNode.getParam("scan_counter", iparam) ){
+		if( privateNode.getParam("scancounter", iparam) ){
 			if( iparam < 1 ){
 				ROS_ERROR("Invalid scan_counter parameter: %d", iparam);
 				return false;
 			}
 			else{
 				scan_counter = iparam;
+			}
+		}
+
+		if( privateNode.getParam("systemdelay", iparam) ){
+			if( iparam < 1 ){
+				ROS_ERROR("Invalid systemdelay parameter: %d", iparam);
+				return false;
+			}
+			else{
+				systemdelay = iparam;
+			}
+		}
+
+		if( privateNode.getParam("unlabeledleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("unlabeled_leafsize parameter error");
+				return false;
+			}
+			else{
+				unlabeled_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("outlierleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("outlier_leafsize parameter error");
+				return false;
+			}
+			else{
+				outlier_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("carleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("car_leafsize parameter error");
+				return false;
+			}
+			else{
+				car_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("bicycleleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("bicycle_leafsize parameter error");
+				return false;
+			}
+			else{
+				bicycle_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("busleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("bus_leafsize parameter error");
+				return false;
+			}
+			else{
+				bus_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("motorcycleleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("motorcycle_leafsize parameter error");
+				return false;
+			}
+			else{
+				motorcycle_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("onrailsleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("onrails_leafsize parameter error");
+				return false;
+			}
+			else{
+				onrails_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("truckleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("truck_leafsize parameter error");
+				return false;
+			}
+			else{
+				truck_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("othervehicleleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("othervehicle_leafsize parameter error");
+				return false;
+			}
+			else{
+				othervehicle_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("roadleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("road_leafsize parameter error");
+				return false;
+			}
+			else{
+				road_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("parkingleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("parking_leafsize parameter error");
+				return false;
+			}
+			else{
+				parking_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("sidewalkleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("sidewalk_leafsize parameter error");
+				return false;
+			}
+			else{
+				sidewalk_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("othergroundleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("otherground_leafsize parameter error");
+				return false;
+			}
+			else{
+				otherground_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("buildingleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("building_leafsize parameter error");
+				return false;
+			}
+			else{
+				building_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("fenceleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("fence_leafsize parameter error");
+				return false;
+			}
+			else{
+				fence_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("otherstructureleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("otherstructure_leafsize parameter error");
+				return false;
+			}
+			else{
+				otherstructure_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("lanemarkingleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("lanemarking_leafsize parameter error");
+				return false;
+			}
+			else{
+				lanemarking_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("vegetationleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("vegetation_leafsize parameter error");
+				return false;
+			}
+			else{
+				vegetation_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("trunkleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("trunk_leafsize parameter error");
+				return false;
+			}
+			else{
+				trunk_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("terrainleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("terrain_leafsize parameter error");
+				return false;
+			}
+			else{
+				terrain_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("poleleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("pole_leafsize parameter error");
+				return false;
+			}
+			else{
+				pole_leafsize = fparam;
+			}
+		}
+
+		if( privateNode.getParam("trafficsignleafsize", fparam)){
+			if(fparam < 0.0 ){
+				ROS_ERROR("trafficsign_leafsize parameter error");
+				return false;
+			}
+			else{
+				trafficsign_leafsize = fparam;
 			}
 		}
 
@@ -157,13 +389,13 @@ namespace semloam{
 			truck.push_back(point);
 		}
 		else if(color_id.r==255 && color_id.g==30 && color_id.b==30){
-			person.push_back(point);
+			//person.push_back(point);
 		}
 		else if(color_id.r==255 && color_id.g==40 && color_id.b==200){
-			bicyclist.push_back(point);
+			//bicyclist.push_back(point);
 		}
 		else if(color_id.r==150 && color_id.g==30 && color_id.b==90){
-			motorcyclist.push_back(point);
+			//motorcyclist.push_back(point);
 		}
 		else if(color_id.r==255 && color_id.g==0 && color_id.b==255){
 			road.push_back(point);
@@ -269,6 +501,72 @@ namespace semloam{
 		std::cout << "clear common cloud" << std::endl;
 	}
 
+	void LaserMapping::voxel_grid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud_in, const float semantic_leafsize){
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr pc(new pcl::PointCloud<pcl::PointXYZRGB>(cloud_in) );
+
+		//Do voxel grid filter
+		if( semantic_leafsize != 0.0 ){
+			std::cout << "Do Voxel Grid Filter" << std::endl;
+
+			pcl::VoxelGrid<pcl::PointXYZRGB> vg;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZRGB> );
+
+			vg.setInputCloud( pc );
+			vg.setLeafSize(semantic_leafsize, semantic_leafsize, semantic_leafsize);
+
+			vg.filter( *tmp );
+
+			*pc = *tmp;
+		}
+		else{
+			std::cout << "No voxel grid" << std::endl;
+		}
+
+		//Contain pointcloud to pc_map_cloud
+		for(size_t i=0; i< pc->points.size(); i++){
+			pcl::PointXYZRGB point;
+			
+			point.r = pc->points[i].r;
+			point.g = pc->points[i].g;
+			point.b = pc->points[i].b;
+
+			point.x = pc->points[i].x;
+			point.y = pc->points[i].y;
+			point.z = pc->points[i].z;
+
+			pc_map_cloud.push_back(point);
+		}
+
+	}
+
+	void LaserMapping::do_voxel_grid(){
+
+		voxel_grid(unlabeled, unlabeled_leafsize);
+		voxel_grid(outlier, outlier_leafsize);
+		voxel_grid(car, car_leafsize);
+		voxel_grid(bicycle, bicycle_leafsize);
+		voxel_grid(bus, bus_leafsize);
+		voxel_grid(motorcycle, motorcycle_leafsize);
+		voxel_grid(onrails, onrails_leafsize);
+		voxel_grid(truck, truck_leafsize);
+		voxel_grid(othervehicle, othervehicle_leafsize);
+		voxel_grid(road, road_leafsize);
+		voxel_grid(parking, parking_leafsize);
+		voxel_grid(sidewalk, sidewalk_leafsize);
+		voxel_grid(otherground, otherground_leafsize);
+		voxel_grid(building, building_leafsize);
+		voxel_grid(fence, fence_leafsize);
+		voxel_grid(otherstructure, otherstructure_leafsize);
+		voxel_grid(lanemarking, lanemarking_leafsize);
+		voxel_grid(vegetation, vegetation_leafsize);
+		voxel_grid(trunk, trunk_leafsize);
+		voxel_grid(terrain, terrain_leafsize);
+		voxel_grid(pole, pole_leafsize);
+		voxel_grid(trafficsign, trafficsign_leafsize);
+
+	}
+
 	void LaserMapping::reset_semantic_cloud(){
 
 		//clear semantic point cloud data
@@ -280,9 +578,9 @@ namespace semloam{
 		onrails.clear();
 		truck.clear();
 		othervehicle.clear();
-		person.clear();
-		bicyclist.clear();
-		motorcyclist.clear();
+		//person.clear();
+		//bicyclist.clear();
+		//motorcyclist.clear();
 		road.clear();
 		parking.clear();
 		sidewalk.clear();
@@ -297,10 +595,34 @@ namespace semloam{
 		pole.clear();
 		trafficsign.clear();
 
+		pc_map_cloud.clear();
+
 		std::cout << "clear semantic cloud" << std::endl;
 	}
 
-	void LaserMapping::process(int counter){
+	void LaserMapping::publish_pointcloud(){
+
+		sensor_msgs::PointCloud2 pc_map;
+
+		pcl::toROSMsg(pc_map_cloud, pc_map);
+
+		pc_map.header.frame_id = "map";
+		pc_map.header.stamp = odom_time;
+
+		_pub_pc.publish(pc_map);
+
+		_pub_odom.publish(odom_data);
+
+		std::cout << "Published PointCloud and Odometry data" << std::endl;
+
+	}
+
+	int LaserMapping::process(int counter){
+
+		if(systemdelay > 0 ){
+			--systemdelay;
+			return 0;
+		}
 
 		Time start_sec = ros::Time::now();
 
@@ -337,9 +659,35 @@ namespace semloam{
 		std::cout << "process has ended" << std::endl;
 		std::cout << "process time: "<< duration_process << std::endl;
 
+		return 1;
+
 	}
 
+	bool LaserMapping::check_status(){
 
+		bool k;
+
+		if(                velo_checker==true
+				&& odom_checker==true
+				&& edge_checker==true
+				&& cent_checker==true){
+			k = true;
+		}
+		else{
+			k = false;
+		}
+
+		return k;
+	}
+
+	void LaserMapping::status_reset(){
+
+		velo_checker = false;
+		odom_checker = false;
+		edge_checker = false;
+		cent_checker = false;
+
+	}
 
 	void LaserMapping::spin(){
 
@@ -349,11 +697,18 @@ namespace semloam{
 
 		while( ros::ok() ){
 
-			counter += 1;
+			ros::spinOnce();
 
-			ros::sinOnce();
+			bool status_checker = check_status();
 
-			process(counter);
+			if( status_checker==true ){
+				
+				int checker = process(counter);
+				
+				counter += checker;
+
+				status_reset();
+			}
 
 			rate.sleep();
 		}

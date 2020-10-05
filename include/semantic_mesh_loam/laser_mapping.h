@@ -13,7 +13,7 @@
 #include"tf/transform_broadcaster.h"
 #include"tf/transform_listener.h"
 
-#include"pcl_pointcloud.h"
+#include"pcl/point_cloud.h"
 #include"pcl/point_types.h"
 #include"pcl_conversions/pcl_conversions.h"
 
@@ -40,7 +40,11 @@ namespace semloam{
 
 			void spin();
 
-			void process(int counter);
+			int process(int counter);
+
+			bool check_status();
+
+			void status_reset();
 
 			void get_tf_data();
 
@@ -56,6 +60,8 @@ namespace semloam{
 
 			void do_voxel_grid();
 
+			void voxel_grid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud_in, const float semantic_leafsize);
+
 			void publish_pointcloud();
 
 			void pointcloud_to_pcd();
@@ -66,7 +72,11 @@ namespace semloam{
 			ros::Subscriber _sub_centroid;
 			ros::Subscriber _sub_edge;
 
+			ros::Publisher _pub_pc;
+			ros::Publisher _pub_odom;
+
 			int scan_counter = 10; //Do voxel grid extraction per scan_counter
+			int systemdelay = 70;
 
 			tf::TransformListener listener;
 			tf::StampedTransform map_to_laserodometry;
@@ -96,9 +106,9 @@ namespace semloam{
                         pcl::PointCloud<pcl::PointXYZRGB> onrails;
                         pcl::PointCloud<pcl::PointXYZRGB> truck;
                         pcl::PointCloud<pcl::PointXYZRGB> othervehicle;
-                        pcl::PointCloud<pcl::PointXYZRGB> person;
-                        pcl::PointCloud<pcl::PointXYZRGB> bicyclist;
-                        pcl::PointCloud<pcl::PointXYZRGB> motorcyclist;
+                        //pcl::PointCloud<pcl::PointXYZRGB> person;
+                        //pcl::PointCloud<pcl::PointXYZRGB> bicyclist;
+                        //pcl::PointCloud<pcl::PointXYZRGB> motorcyclist;
                         pcl::PointCloud<pcl::PointXYZRGB> road;
                         pcl::PointCloud<pcl::PointXYZRGB> parking;
                         pcl::PointCloud<pcl::PointXYZRGB> sidewalk;
@@ -112,6 +122,33 @@ namespace semloam{
                         pcl::PointCloud<pcl::PointXYZRGB> terrain;
                         pcl::PointCloud<pcl::PointXYZRGB> pole;
                         pcl::PointCloud<pcl::PointXYZRGB> trafficsign;
+
+			pcl::PointCloud<pcl::PointXYZRGB> pc_map_cloud;
+
+			size_t pc_map_cloud_size = 100*10000;
+
+			float unlabeled_leafsize = 0.0;
+			float outlier_leafsize = 0.0;
+			float car_leafsize = 0.2;
+			float bicycle_leafsize = 0.05;
+			float bus_leafsize = 0.1;
+			float motorcycle_leafsize = 0.05;
+			float onrails_leafsize = 0.1;
+			float truck_leafsize = 0.2;
+			float othervehicle_leafsize = 0.1;
+			float road_leafsize = 0.25;
+			float parking_leafsize = 0.25;
+			float sidewalk_leafsize = 0.25;
+			float otherground_leafsize = 0.25;
+			float building_leafsize = 0.25;
+			float fence_leafsize = 0.25;
+			float otherstructure_leafsize = 0.25;
+			float lanemarking_leafsize = 0.0;
+			float vegetation_leafsize = 0.15;
+			float trunk_leafsize = 0.0;
+			float terrain_leafsize = 0.1;
+			float pole_leafsize = 0.0;
+			float trafficsign_leafsize = 0.0;
 
 			const size_t pc_size_big = 100000;
 			const size_t pc_size_mid =  50000;
