@@ -10,11 +10,12 @@
 	</node>
 
 	<arg name="PCDpath" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/PCD_data/" />
+	<arg name="PCDfilename" default="semantic_mesh_loam" />
 
 	<node pkg="semantic_mesh_loam" type="laser_mapping" name="laser_mapping" output="screen">
 		<param name="systemdelay" value="5" type="int" />
 		<param name="filepath" value="$(arg PCDpath)" />
-
+		<param name="filename" value="$(arg PCDfilename)" />
 	</node>
 
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />

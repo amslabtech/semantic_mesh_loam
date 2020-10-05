@@ -82,6 +82,7 @@ namespace semloam{
 			int pcd_counter = 0;
 
 			std::string file_path = "/home/amsl/catkin_ws/PCD_file/";
+			std::string file_name = "semantic_mesh_loam";
 
 			tf::TransformListener listener;
 			tf::StampedTransform map_to_laserodometry;

@@ -111,6 +111,16 @@ namespace semloam{
 			}
 		}
 
+		if( privateNode.getParam("filename", strparam)){
+			if( strparam.length() < 1 ){
+				ROS_ERROR("Invalid file name");
+				return false;
+			}
+			else{
+				file_name = strparam;
+			}
+		}
+
 		if( privateNode.getParam("PCDsaveChecker", bparam)){
 			if( bparam==true || bparam==false ){
 				ROS_ERROR("Invalid PCDsaveChecker parameter");
