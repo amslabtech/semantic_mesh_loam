@@ -78,6 +78,11 @@ namespace semloam{
 			int scan_counter = 10; //Do voxel grid extraction per scan_counter
 			int systemdelay = 70;
 
+			bool pcd_save_checker = false;
+			int pcd_counter = 0;
+
+			std::string file_path = "/home/amsl/catkin_ws/PCD_file/";
+
 			tf::TransformListener listener;
 			tf::StampedTransform map_to_laserodometry;
 

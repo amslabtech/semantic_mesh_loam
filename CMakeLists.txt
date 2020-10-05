@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   pcl_conversions
+  pcl_ros
 )
 
 find_package(Eigen3 REQUIRED)
@@ -39,6 +40,10 @@ target_link_libraries(classify_pointcloud ${catkin_LIBRARIES} ${PCL_LIBRARIES} s
 
 add_executable(laser_odometry src/laser_odometry.cpp)
 target_link_libraries(laser_odometry ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
+
+add_executable(laser_mapping src/laser_mapping.cpp)
+target_link_libraries(laser_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
+
 
 
 

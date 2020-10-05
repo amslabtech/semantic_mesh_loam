@@ -9,8 +9,11 @@
 		<param name="MaxCorrespondDistance" value="0.40" type="double"/>
 	</node>
 
+	<arg name="PCDpath" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/PCD_data/" />
+
 	<node pkg="semantic_mesh_loam" type="laser_mapping" name="laser_mapping" output="screen">
 		<param name="systemdelay" value="5" type="int" />
+		<param name="filepath" value="$(arg PCDpath)" />
 
 	</node>
 

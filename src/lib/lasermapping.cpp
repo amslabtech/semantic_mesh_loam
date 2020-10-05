@@ -98,6 +98,28 @@ namespace semloam{
 
 		float fparam;
 		int iparam;
+		bool bparam;
+		std::string strparam;
+
+		if( privateNode.getParam("filepath", strparam)){
+			if( strparam.length() < 1 ){
+				ROS_ERROR("Invalid file path");
+				return false;
+			}
+			else{
+				file_path = strparam;
+			}
+		}
+
+		if( privateNode.getParam("PCDsaveChecker", bparam)){
+			if( bparam==true || bparam==false ){
+				ROS_ERROR("Invalid PCDsaveChecker parameter");
+				return false;
+			}
+			else{
+				pcd_save_checker = bparam;
+			}
+		}
 
 		if( privateNode.getParam("scancounter", iparam) ){
 			if( iparam < 1 ){
