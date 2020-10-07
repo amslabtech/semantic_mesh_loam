@@ -16,6 +16,13 @@
 		<param name="systemdelay" value="5" type="int" />
 		<param name="filepath" value="$(arg PCDpath)" />
 		<param name="filename" value="$(arg PCDfilename)" />
+
+		<param name="PCDsaveChecker" value="true" type="bool" />
+		<param name="ROSpublishChecker" value="true" type="bool" />
+
+		<param name="PCDsaveAscii" value="true" type="bool" />
+		<param name="PCDsaveBinary" value="false" type="bool" />
+
 	</node>
 
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />

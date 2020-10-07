@@ -43,7 +43,7 @@ namespace semloam{
 
 		velo_checker = true;
 
-		std::cout << "catch velodyne_data" << std::endl;
+		//std::cout << "catch velodyne_data" << std::endl;
 
 	}
 
@@ -53,7 +53,7 @@ namespace semloam{
 
 		edge_checker = true;
 
-		std::cout << "catch edge_data" << std::endl;
+		//std::cout << "catch edge_data" << std::endl;
 
 	}
 
@@ -63,7 +63,7 @@ namespace semloam{
 
 		cent_checker = true;
 
-		std::cout << "catch cent_data" << std::endl;
+		//std::cout << "catch cent_data" << std::endl;
 
 	}
 
@@ -75,7 +75,7 @@ namespace semloam{
 
 		odom_checker = true;
 
-		std::cout << "catch odom_data" << std::endl;
+		//std::cout << "catch odom_data" << std::endl;
 
 	}
 
@@ -121,13 +121,43 @@ namespace semloam{
 			}
 		}
 
+		if( privateNode.getParam("PCDsaveAscii", bparam)){
+			if( !(bparam==true || bparam==false) ){
+				ROS_ERROR("Invalid PCDsaveAscii parameter");
+				return false;
+			}
+			else{
+				pcd_save_ascii = bparam;
+			}
+		}
+
+		if( privateNode.getParam("PCDsaveBinary", bparam)){
+			if( !(bparam==true || bparam==false) ){
+				ROS_ERROR("Invalid PCDsaveBinary parameter");
+				return false;
+			}
+			else{
+				pcd_save_binary = bparam;
+			}
+		}
+
 		if( privateNode.getParam("PCDsaveChecker", bparam)){
-			if( bparam==true || bparam==false ){
+			if( !(bparam==true || bparam==false) ){
 				ROS_ERROR("Invalid PCDsaveChecker parameter");
 				return false;
 			}
 			else{
 				pcd_save_checker = bparam;
+			}
+		}
+
+		if( privateNode.getParam("ROSpublishChecker", bparam)){
+			if( !(bparam==true || bparam==false) ){
+				ROS_ERROR("Invalid ROSPublishChecker parameter");
+				return false;
+			}
+			else{
+				ros_publish_checker = bparam;
 			}
 		}
 
@@ -384,7 +414,7 @@ namespace semloam{
 				listener.waitForTransform("map", "laserodometry", odom_time, ros::Duration(0.5) );
 				listener.lookupTransform("map", "laserodometry", odom_time, map_to_laserodometry );
 
-				ROS_INFO("GET TRANSFORM MAP TO KASERODOMETRY IN LASERMAPPING PROCESS");
+				//ROS_INFO("GET TRANSFORM MAP TO KASERODOMETRY IN LASERMAPPING PROCESS");
 				
 				break;
 			}
@@ -511,7 +541,7 @@ namespace semloam{
 
 		}
 
-		std::cout << "End classify pointcloud" << std::endl;
+		//std::cout << "End classify pointcloud" << std::endl;
 
 	}
 
@@ -521,7 +551,7 @@ namespace semloam{
 		//pcl_ros::transformPointCloud("map", odom_time, cloud_edge, "laserodometry", cloud_edge, listener);
 		//pcl_ros::transformPointCloud("map", odom_time, cloud_centroid, "laserodometry", cloud_centroid, listener);
 
-		std::cout << "PointCloud is transformed from laserodometry frame to map frame" << std::endl;
+		//std::cout << "PointCloud is transformed from laserodometry frame to map frame" << std::endl;
 	}
 
 	void LaserMapping::reset_common_cloud(){
@@ -530,7 +560,7 @@ namespace semloam{
 		cloud_edge.clear();
 		cloud_centroid.clear();
 
-		std::cout << "clear common cloud" << std::endl;
+		//std::cout << "clear common cloud" << std::endl;
 	}
 
 	void LaserMapping::voxel_grid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud_in, const float semantic_leafsize){
@@ -539,7 +569,7 @@ namespace semloam{
 
 		//Do voxel grid filter
 		if( semantic_leafsize != 0.0 ){
-			std::cout << "Do Voxel Grid Filter" << std::endl;
+			//std::cout << "Do Voxel Grid Filter" << std::endl;
 
 			pcl::VoxelGrid<pcl::PointXYZRGB> vg;
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZRGB> );
@@ -552,7 +582,7 @@ namespace semloam{
 			*pc = *tmp;
 		}
 		else{
-			std::cout << "No voxel grid" << std::endl;
+			//std::cout << "No voxel grid" << std::endl;
 		}
 
 		//Contain pointcloud to pc_map_cloud
@@ -629,7 +659,7 @@ namespace semloam{
 
 		pc_map_cloud.clear();
 
-		std::cout << "clear semantic cloud" << std::endl;
+		//std::cout << "clear semantic cloud" << std::endl;
 	}
 
 	void LaserMapping::publish_pointcloud(){
@@ -645,7 +675,31 @@ namespace semloam{
 
 		_pub_odom.publish(odom_data);
 
-		std::cout << "Published PointCloud and Odometry data" << std::endl;
+		//std::cout << "Published PointCloud and Odometry data" << std::endl;
+
+	}
+
+	void LaserMapping::pointcloud_to_pcd(){
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcd_cloud(new pcl::PointCloud<pcl::PointXYZRGB>(pc_map_cloud) );
+
+		std::string count_num = std::to_string(pcd_counter);
+
+		//Define file path and file name
+		//example:/home/username/catkin_ws/src/semantic_mesh_loam/PCD_data/semantic_mesh_loam123.pcd
+		std::string path_ascii = file_path + file_name + "_ascii" + count_num +  ".pcd";
+		std::string path_binary = file_path + file_name + "_binary" + count_num +  ".pcd";
+
+		if( pcd_save_ascii == true ){
+			pcl::io::savePCDFileASCII(path_ascii, *pcd_cloud);
+			std::cout << "Save PointCloud data as " << path_ascii << std::endl;
+		}
+
+		if( pcd_save_binary == true ){
+			pcl::io::savePCDFileBinary(path_binary, *pcd_cloud);
+			std::cout << "Save PointCloud data as " << path_binary << std::endl;
+		}
+
+		pcd_counter += 1;
 
 	}
 
@@ -671,11 +725,15 @@ namespace semloam{
 			//do voxel grid reducion per semantic point cloud
 			do_voxel_grid();
 
-			//publish pointcloud as ROS msg
-			publish_pointcloud();
+			if(ros_publish_checker == true){
+				//publish pointcloud as ROS msg
+				publish_pointcloud();
+			}
 
-			//publish pointcloud as .PCD file
-			//pointcloud_to_pcd();
+			if(pcd_save_checker == true){
+				//publish pointcloud as .PCD file
+				pointcloud_to_pcd();
+			}
 			
 			//clear semantic point cloud like car and outlier
 			reset_semantic_cloud();
@@ -688,8 +746,8 @@ namespace semloam{
 
 		double duration_process = end_sec.toSec() - start_sec.toSec();
 
-		std::cout << "process has ended" << std::endl;
-		std::cout << "process time: "<< duration_process << std::endl;
+		//std::cout << "process has ended" << std::endl;
+		//std::cout << "process time: "<< duration_process << std::endl;
 
 		return 1;
 

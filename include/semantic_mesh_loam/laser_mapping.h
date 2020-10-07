@@ -79,7 +79,11 @@ namespace semloam{
 			int systemdelay = 70;
 
 			bool pcd_save_checker = false;
+			bool ros_publish_checker = true;
 			int pcd_counter = 0;
+
+			bool pcd_save_ascii = true;
+			bool pcd_save_binary = false;
 
 			std::string file_path = "/home/amsl/catkin_ws/PCD_file/";
 			std::string file_name = "semantic_mesh_loam";

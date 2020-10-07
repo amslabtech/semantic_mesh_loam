@@ -381,7 +381,7 @@ namespace semloam{
 			try{
 				listener.waitForTransform("map", "velodyne", odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("velodyne", _last_odom_data_time, "velodyne", odom_data_time, "map", init_odometry_slide);
-				ROS_INFO("GET TRANSFORM VELO FRAME AND VELODYNE FRAME IN GET_RELATIVE_TRANS");
+				//ROS_INFO("GET TRANSFORM VELO FRAME AND VELODYNE FRAME IN GET_RELATIVE_TRANS");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -475,7 +475,7 @@ namespace semloam{
 				listener.waitForTransform("laserodometry", "init_slide", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("laserodometry", "init_slide", _last_odom_data_time, laserodometry_to_init_slide);
 
-				ROS_INFO("GET TRANSFORM LASERODOMETRY FRAME AND INIT_SLIDE FRAME IN INIT_PC_SLIDE");
+				//ROS_INFO("GET TRANSFORM LASERODOMETRY FRAME AND INIT_SLIDE FRAME IN INIT_PC_SLIDE");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -512,7 +512,7 @@ namespace semloam{
 				listener.waitForTransform("init_slide", "laserodometry", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("init_slide", "laserodometry", _last_odom_data_time, init_slide_to_laserodometry);
 
-				ROS_INFO("GET TRANSFORM INIT_SLIDE FRAME AND LASERODOMETRY FRAME IN INIT_PC_SLIDE");
+				//ROS_INFO("GET TRANSFORM INIT_SLIDE FRAME AND LASERODOMETRY FRAME IN INIT_PC_SLIDE");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -530,7 +530,6 @@ namespace semloam{
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr _lastFeatureCloud_Ptr(new pcl::PointCloud<pcl::PointXYZRGB>( icp_featurecloud_last ) );
 
 		//Set the input source(current scan) and target(previous scan) pointcloud
-		//icp.setInputCloud( FeatureCloud_Ptr); // only ::Ptr
 		//std::cout << "set source and target frame" << std::endl;
 		icp.setInputSource( FeatureCloud_Ptr );
 		icp.setInputTarget( _lastFeatureCloud_Ptr );
@@ -570,7 +569,6 @@ namespace semloam{
 
 
 		//Set the input source(current scan) and target(previous scan) pointcloud
-		//icp.setInputCloud( FeatureCloud_Ptr); // only ::Ptr
 		//std::cout << "set source and target frame" << std::endl;
 		icp.setInputSource( FeatureCloud_Ptr );
 		icp.setInputTarget( _lastFeatureCloud_Ptr );
@@ -613,7 +611,7 @@ namespace semloam{
 				//listener.lookupTransform("map", "laserodometry", _last_odom_data_time, listener);
 
 
-				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN GET_TF_DATA");
+				//ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN GET_TF_DATA");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -670,7 +668,7 @@ namespace semloam{
 				listener.waitForTransform("map", "laserodometry", _last_odom_data_time, ros::Duration(1.0) );
 				listener.lookupTransform("map", "laserodometry", _last_odom_data_time, laserodometry_to_map);
 				//listener.lookupTransform("map", "laserodometry", _last_odom_data_time, listener);
-				ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN INITIALIZATION");
+				//ROS_INFO("GET TRANSFORM MAP FRAME AND VELODYNE FRAME IN INITIALIZATION");
 				break;
 			}
 			catch(tf::TransformException ex){
@@ -707,44 +705,15 @@ namespace semloam{
 
 		Eigen::Matrix4f last_pose;
 
-		/*
-		tf::Vector3 row0 = rota.getRow(0);
-		tf::Vector3 row1 = rota.getRow(1);
-		tf::Vector3 row2 = rota.getRow(2);
-
-		
-		last_pose <<               row0.getX(), row0.getY(), row0.getZ(), place.x(),
-				           row1.getX(), row1.getY(), row1.getZ(), place.y(),
-				           row2.getX(), row2.getY(), row2.getZ(), place.z(),
-				                  0.0,        0.0,        0.0,     1.0;
-
-		
-
-		*/
 		last_pose <<               rota[0][0], rota[0][1], rota[0][2], place[0],
 				           rota[1][0], rota[1][1], rota[1][2], place[1],
 				           rota[2][0], rota[2][1], rota[2][2], place[2],
 				                  0.0,        0.0,        0.0,     1.0;
+		
 		//std::cout << "last_pose" << std::endl;
 		//std::cout << last_pose << std::endl;
 	//std::cout << "getting now pose as 4x4 matrix" << std::endl;
 		Eigen::Matrix4f now_pose = last_pose * Tm;
-
-		/*
-		tf::Matrix3x3 orientation_mat(
-				now_pose(0,0), now_pose(0,1), now_pose(0,2),
-				now_pose(1,0), now_pose(1,1), now_pose(1,2),
-				now_pose(2,0), now_pose(2,1), now_pose(2,2) );
-
-		tf::Quaternion quat;
-
-		orientation_mat.getRotation( quat );
-		quat.normalize();
-
-		geometry_msgs::Pose cur_pose;
-		
-		quaternionTFToMsg( quat , cur_pose.orientation );
-		*/
 
 		Eigen::Matrix3f ori_mat;
 		ori_mat << now_pose(0, 0), now_pose(0, 1), now_pose(0, 2),
@@ -829,15 +798,6 @@ namespace semloam{
 
 
 		br.sendTransform( car_state );
-
-		/*
-		// rewrite laserodometry_to_map
-		laserodometry_to_map.stamp_ = laserodometry.header.stamp;
-		laserodometry_to_map.setRotation( tf::Quaternion( laserodometry.pose.pose.orientation.x, laserodometry.pose.pose.orientation.y, laserodometry.pose.pose.orientation.z, laserodometry.pose.pose.orientation.w ) );
-		laserodometry_to_map.setOrigin( tf::Vector3( laserodometry.pose.pose.position.x, laserodometry.pose.pose.position.y, laserodometry.pose.pose.position.z) );
-
-		br.sendTransform( laserodometry_to_map );
-		*/
 	}
 
 	void LaserOdometry::final_transform_pc(Eigen::Matrix4f laserodometry_trans_matrix){
