@@ -6,7 +6,7 @@
 
 	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />
 	<arg name="file_1" default="semantickitti_sequence00" />
-	<arg name="play_speed" default="-r 0.5" />
+	<arg name="play_speed" default="-r 0.1" />
 
 	<node pkg="rosbag" type="play" name="rosbag_play" output="screen"
 	args="$(arg path)$(arg file_1).bag $(arg play_speed)" />

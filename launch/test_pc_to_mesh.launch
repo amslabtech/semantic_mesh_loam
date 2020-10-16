@@ -1,0 +1,6 @@
+<launch>
+
+	<node pkg="semantic_mesh_loam" type="pc_to_mesh" name="pc_to_mesh" output="screen">
+
+	</node>
+</launch>
