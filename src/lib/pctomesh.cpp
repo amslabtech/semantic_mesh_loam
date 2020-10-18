@@ -11,9 +11,24 @@ namespace semloam{
 	bool PcToMesh::setup(ros::NodeHandle& node, ros::NodeHandle& privateNode){
 
 		float fparam;
+		double dparam;
 		int iparam;
 		bool bparam;
 		std::string strparam;
+
+		_pubroad = node.advertise<sensor_msgs::PointCloud2>("/road",2);
+		_pubcar = node.advertise<sensor_msgs::PointCloud2>("/car",2);
+
+
+		if( privateNode.getParam("NormalSearchRadius", dparam) ){
+			if(dparam < 0.0001){
+				ROS_ERROR("Invalid NormalSearchRadius parameter");
+				return false;
+			}
+			else{
+				normal_search_radius = dparam;
+			}
+		}
 
 		if( privateNode.getParam("filepath", strparam) ){
 			if(strparam.length() < 1 ){
@@ -81,8 +96,39 @@ namespace semloam{
 
 		load_PCD();
 
-		generate_mesh();
+		pcl::visualization::PCLVisualizer viewer;//create visualizer
 
+		init_config_viewer_parameter(viewer);
+
+		std::cout << "generate mesh" << std::endl;
+		generate_mesh(viewer);
+
+		config_tmp_viewer_parameter(viewer);
+
+		while( ros::ok() ){
+
+			viewer.spin();
+			//publishing to ros msg is succeed
+			//publish_rosmsg();
+
+		}
+
+	}
+
+	void PcToMesh::publish_rosmsg(){
+		sensor_msgs::PointCloud2 car_pc2, road_pc2;
+
+		pcl::toROSMsg(car, car_pc2);
+		pcl::toROSMsg(road, road_pc2);
+
+		car_pc2.header.frame_id = "map";
+		road_pc2.header.frame_id = "map";
+
+		car_pc2.header.stamp = ros::Time::now();
+		road_pc2.header.stamp = ros::Time::now();
+
+		_pubroad.publish(road_pc2);
+		_pubcar.publish(car_pc2);
 	}
 
 	void PcToMesh::load_PCD(){
@@ -221,6 +267,113 @@ namespace semloam{
 
 		return true;
 	}
+
+	void PcToMesh::init_config_viewer_parameter(pcl::visualization::PCLVisualizer& viewer){
+
+		std::cout << "Config viewer init parameter except place" << std::endl;
+
+		viewer.initCameraParameters();
+
+	}
+
+	void PcToMesh::generate_mesh(pcl::visualization::PCLVisualizer& viewer){
+
+		std::cout << "Generate Triangle Mesh" << std::endl;	
+		generate_semantic_mesh(viewer, car, "car");
+		generate_semantic_mesh(viewer, road, "road");
+
+	}
+
+	void PcToMesh::generate_semantic_mesh(pcl::visualization::PCLVisualizer& viewer,const pcl::PointCloud<pcl::PointXYZRGB>& semantic_cloud, const std::string semantic_name){
+		
+		std::cout << "Create semantic mesh of " << semantic_name << " " << std::endl;
+		std::cout << "compute normal of " << semantic_name << std::endl;
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin (new pcl::PointCloud<pcl::PointXYZRGB>(semantic_cloud));
+		//create smart pointer because normal estimation and greedytriangulation need smart pointer
+
+		pcl::NormalEstimation<pcl::PointXYZRGB, pcl::PointNormal> ne;
+
+		pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normal(new pcl::PointCloud<pcl::PointNormal>);
+
+		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+
+		kdtree->setInputCloud(cloudin);
+
+		//Set search method
+		ne.setSearchMethod(kdtree);
+
+		//Set normal search radius
+		ne.setRadiusSearch(normal_search_radius);
+
+		//表裏を決める部分
+		ne.setViewPoint(0, 0, 100000);
+
+		ne.setInputCloud(cloudin);
+
+		ne.compute(*cloud_normal);
+		
+		//アホみたいな話だがPointNormalで受け取ってもXYZの情報は0のままなので写してやる必要がある
+		for (int i = 0; i < cloud_normal->points.size(); i++){
+
+			cloud_normal->points[i].x = cloudin->points[i].x;
+			cloud_normal->points[i].y = cloudin->points[i].y;
+			cloud_normal->points[i].z = cloudin->points[i].z;
+
+		}
+
+		std::cout << cloudin->points[0].x << std::endl;
+		std::cout << cloudin->points[0].y << std::endl;
+		std::cout << cloudin->points[0].z << std::endl;
+
+		std::cout << "Compute polygon mesh of " << semantic_name << std::endl;
+
+		pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+		pcl::PolygonMesh triangles;
+
+		//微調整が必要なパラメータ
+		gp3.setSearchRadius(1.0);
+		gp3.setMu(5.0);
+		gp3.setMaximumNearestNeighbors(900);
+		gp3.setMaximumSurfaceAngle(PI/2.0);
+		gp3.setMinimumAngle(-PI);
+		gp3.setMaximumAngle(PI);
+		gp3.setNormalConsistency(true);
+
+		gp3.setInputCloud(cloud_normal);
+		
+		//Create new KdTree for PointNormal
+		pcl::search::KdTree<pcl::PointNormal>::Ptr treePN(new pcl::search::KdTree<pcl::PointNormal>);
+		treePN->setInputCloud(cloud_normal);
+		gp3.setSearchMethod(treePN);
+
+		//COmpute triangles
+		gp3.reconstruct(triangles);
+
+		viewer.addPolygonMesh(triangles, semantic_name);
+		
+		
+		//Convert RGB data 0~255 to 0.0~1.0
+		float color_r = float(cloudin->points[0].r)/255.0;
+		float color_g = float(cloudin->points[0].g)/255.0;
+		float color_b = float(cloudin->points[0].b)/255.0;
+
+		//viewer.addPointCloud<pcl::PointXYZRGB>(cloudin, semantic_name, v1);
+		//viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, semantic_name, v1);
+
+		viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color_r, color_g, color_b, semantic_name);
+		viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1.0, semantic_name);
+
+		std::cout << "Semantic mesh " << semantic_name << " was added to PCL visualizer" << std::endl;
+
+	}
+
+	void PcToMesh::config_tmp_viewer_parameter(pcl::visualization::PCLVisualizer& viewer){
+
+		viewer.setCameraPosition(0.0,0.0,0.0, 0.0,0.0,0.0);// x, y, z, roll, pitch, yaw
+
+	}
+
 
 
 

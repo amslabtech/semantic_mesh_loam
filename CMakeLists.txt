@@ -44,6 +44,9 @@ target_link_libraries(laser_odometry ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloa
 add_executable(laser_mapping src/laser_mapping.cpp)
 target_link_libraries(laser_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
 
+add_executable(pc_to_mesh src/pc_to_mesh.cpp)
+target_link_libraries(pc_to_mesh ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
+
 
 
 
