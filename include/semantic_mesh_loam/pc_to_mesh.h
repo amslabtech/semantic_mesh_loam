@@ -40,7 +40,7 @@ namespace semloam{
 
 			void init_config_viewer_parameter(pcl::visualization::PCLVisualizer& viewer);
 			
-			void generate_semantic_mesh(pcl::visualization::PCLVisualizer& viewer,const pcl::PointCloud<pcl::PointXYZRGB>& semantic_cloud, const std::string semantic_name);
+			void generate_semantic_mesh(pcl::visualization::PCLVisualizer& viewer,const pcl::PointCloud<pcl::PointXYZRGB>& semantic_cloud, const std::string semantic_name, double search_radius, double max_neighbor);
 
 			void config_tmp_viewer_parameter(pcl::visualization::PCLVisualizer& viewer);
 

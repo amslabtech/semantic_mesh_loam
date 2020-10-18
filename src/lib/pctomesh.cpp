@@ -278,13 +278,91 @@ namespace semloam{
 
 	void PcToMesh::generate_mesh(pcl::visualization::PCLVisualizer& viewer){
 
-		std::cout << "Generate Triangle Mesh" << std::endl;	
-		generate_semantic_mesh(viewer, car, "car");
-		generate_semantic_mesh(viewer, road, "road");
+		std::cout << "Generate Triangle Mesh" << std::endl;
+		
+		if(car.size() > 10){
+			generate_semantic_mesh(viewer, car, "car", 0.30, 400);
+		}
+		
+		if(bicycle.size() > 10 ){
+			generate_semantic_mesh(viewer, bicycle, "bicycle", 0.15, 200);
+		}
+		
+		if(bus.size() > 10 ){
+			generate_semantic_mesh(viewer, bus, "bus", 0.2, 300);
+		}
+
+		if(motorcycle.size() > 10 ){
+			generate_semantic_mesh(viewer, motorcycle, "motorcycle", 0.25, 500);
+		}
+		
+		if(onrails.size() > 10 ){
+			generate_semantic_mesh(viewer, onrails, "onrails", 0.2, 400);
+		}
+
+		if(truck.size() > 10){
+			generate_semantic_mesh(viewer, truck, "truck", 0.3, 600);
+		}
+
+		if(othervehicle.size() > 10 ){
+			generate_semantic_mesh(viewer, othervehicle, "othervehicle", 0.2, 400);
+		}
+
+		if(parking.size() > 10 ){
+			generate_semantic_mesh(viewer, parking, "parking", 0.35, 600);
+		}
+
+		if(sidewalk.size() > 10){
+			generate_semantic_mesh(viewer, sidewalk, "sidewalk", 0.35, 600);
+		}
+
+		if(otherground.size() > 10){
+			generate_semantic_mesh(viewer, otherground, "otherground", 0.35, 700);
+		}
+
+		if(building.size() > 10){
+			generate_semantic_mesh(viewer, building, "building", 0.40, 900);
+		}
+
+		if(fence.size() > 10){
+			generate_semantic_mesh(viewer, fence, "fence", 0.35, 900);
+		}
+
+		if(otherstructure.size() > 10 ){
+			generate_semantic_mesh(viewer, otherstructure, "otherstructure", 0.35, 900);
+		}
+
+		if(lanemarking.size() > 10){
+			generate_semantic_mesh(viewer, lanemarking, "lanemarking", 0.10, 200);
+		}
+
+		if(vegetation.size() > 10 ){
+			generate_semantic_mesh(viewer, vegetation, "vegetation", 0.25, 600);
+		}
+
+		if(trunk.size() > 10){
+			generate_semantic_mesh(viewer, trunk, "trunk", 0.10, 600);
+		}
+
+		if(terrain.size() > 10){
+			generate_semantic_mesh(viewer, terrain, "terrain", 0.20, 500);
+		}
+
+		if(pole.size() > 10){
+			generate_semantic_mesh(viewer, pole, "pole", 0.10, 500);
+		}
+
+		if(trafficsign.size() > 10){
+			generate_semantic_mesh(viewer, trafficsign, "trafficsign", 0.10, 500);
+		}
+
+		if(road.size() > 10 ){
+			generate_semantic_mesh(viewer, road, "road", 0.40, 800);
+		}
 
 	}
 
-	void PcToMesh::generate_semantic_mesh(pcl::visualization::PCLVisualizer& viewer,const pcl::PointCloud<pcl::PointXYZRGB>& semantic_cloud, const std::string semantic_name){
+	void PcToMesh::generate_semantic_mesh(pcl::visualization::PCLVisualizer& viewer,const pcl::PointCloud<pcl::PointXYZRGB>& semantic_cloud, const std::string semantic_name, double search_radius, double max_neighbor){
 		
 		std::cout << "Create semantic mesh of " << semantic_name << " " << std::endl;
 		std::cout << "compute normal of " << semantic_name << std::endl;
@@ -307,7 +385,7 @@ namespace semloam{
 		ne.setRadiusSearch(normal_search_radius);
 
 		//表裏を決める部分
-		ne.setViewPoint(0, 0, 100000);
+		ne.setViewPoint(0, 0, 0);
 
 		ne.setInputCloud(cloudin);
 
@@ -322,9 +400,11 @@ namespace semloam{
 
 		}
 
+		/*
 		std::cout << cloudin->points[0].x << std::endl;
 		std::cout << cloudin->points[0].y << std::endl;
 		std::cout << cloudin->points[0].z << std::endl;
+		*/
 
 		std::cout << "Compute polygon mesh of " << semantic_name << std::endl;
 
@@ -332,9 +412,9 @@ namespace semloam{
 		pcl::PolygonMesh triangles;
 
 		//微調整が必要なパラメータ
-		gp3.setSearchRadius(1.0);
+		gp3.setSearchRadius(search_radius);
 		gp3.setMu(5.0);
-		gp3.setMaximumNearestNeighbors(900);
+		gp3.setMaximumNearestNeighbors(max_neighbor);
 		gp3.setMaximumSurfaceAngle(PI/2.0);
 		gp3.setMinimumAngle(-PI);
 		gp3.setMaximumAngle(PI);
