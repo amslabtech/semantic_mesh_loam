@@ -75,7 +75,7 @@ namespace semloam{
 			ros::Publisher _pub_pc;
 			ros::Publisher _pub_odom;
 
-			int scan_counter = 10; //Do voxel grid extraction per scan_counter
+			int scan_counter = 150; //Do voxel grid extraction per scan_counter
 			int systemdelay = 70;
 
 			bool pcd_save_checker = false;
