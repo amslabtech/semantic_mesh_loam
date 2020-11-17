@@ -4,7 +4,7 @@
 		<param name="lidar" value="HDL-64E" />
 	</node>
 
-	<arg name="path" default="/home/amsl/catkin_ws/src/semantic_mesh_loam/sequence_data/" />
+	<arg name="path" default="/home/amsl/catkin_ws/bag_data/" />
 	<arg name="file_1" default="semantickitti_sequence00" />
 	<arg name="play_speed" default="-r 0.1" />
 
