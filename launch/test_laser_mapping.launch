@@ -25,7 +25,7 @@
 
 	</node>
 
-	<arg name="path" default="/home/amsl/catkin_ws/bag_data/" />
+	<arg name="path" default="/home/amsl/bag_data/" />
 	<arg name="file_1" default="semantickitti_sequence00" />
 	<arg name="play_speed" default="-r 0.2" />
 

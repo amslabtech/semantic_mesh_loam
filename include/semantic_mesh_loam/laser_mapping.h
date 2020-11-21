@@ -139,7 +139,7 @@ namespace semloam{
 
 			float unlabeled_leafsize = 0.0;
 			float outlier_leafsize = 0.0;
-			float car_leafsize = 0.15;
+			float car_leafsize = 0.20;
 			float bicycle_leafsize = 0.05;
 			float bus_leafsize = 0.1;
 			float motorcycle_leafsize = 0.05;
@@ -154,9 +154,9 @@ namespace semloam{
 			float fence_leafsize = 0.25;
 			float otherstructure_leafsize = 0.25;
 			float lanemarking_leafsize = 0.05;
-			float vegetation_leafsize = 0.15;
-			float trunk_leafsize = 0.05;
-			float terrain_leafsize = 0.1;
+			float vegetation_leafsize = 0.3;
+			float trunk_leafsize = 0.2;
+			float terrain_leafsize = 0.2;
 			float pole_leafsize = 0.03;
 			float trafficsign_leafsize = 0.0;
 
