@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Grid1
         - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 549
@@ -36,7 +37,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 100
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -196,25 +197,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 213.24880981445312
+      Distance: 791.2753295898438
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 104.06404876708984
+        Y: 142.11590576171875
+        Z: -9.715556144714355
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7853981852531433
+      Pitch: 0.13539879024028778
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.7853981852531433
+      Yaw: 1.1053985357284546
     Saved: ~
 Window Geometry:
   Displays:
@@ -232,5 +233,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 1987
-  Y: 1133
+  X: 524
+  Y: 142

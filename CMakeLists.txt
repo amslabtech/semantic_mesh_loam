@@ -48,6 +48,11 @@ add_executable(pc_to_mesh src/pc_to_mesh.cpp)
 target_link_libraries(pc_to_mesh ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
 
 
+#検証用
+add_executable(ground_truth_laser_odometry src/ground_truth_laser_odometry.cpp)
+target_link_libraries(ground_truth_laser_odometry ${catkin_LIBRARIES} ${PCL_LIBRARIES} semloam)
+
+
 
 
 #endif()

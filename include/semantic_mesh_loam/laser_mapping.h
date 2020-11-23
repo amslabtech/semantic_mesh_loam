@@ -164,6 +164,8 @@ namespace semloam{
 			const size_t pc_size_mid =  50000;
 			const size_t pc_size_min =  10000;
 
+            std::string reference_tf_frame_name = "laserodometry";
+
 	};
 }
 

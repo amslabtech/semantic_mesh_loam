@@ -101,6 +101,17 @@ namespace semloam{
 		bool bparam;
 		std::string strparam;
 
+        if( privateNode.getParam("ReferenceFrame" , strparam ) ){
+            if( strparam=="laserodometry" || strparam=="ground_truth"){
+                reference_tf_frame_name = strparam;
+                std::cout << "Reference frame: " << reference_tf_frame_name << std::endl;
+            }
+            else{
+                ROS_ERROR("Invalid TF frame name");
+                return false;
+            }
+        }
+
 		if( privateNode.getParam("filepath", strparam)){
 			if( strparam.length() < 1 ){
 				ROS_ERROR("Invalid file path");
@@ -411,8 +422,8 @@ namespace semloam{
 		//Look up transform between map and laserodometry
 		while(true){
 			try{
-				listener.waitForTransform("map", "laserodometry", odom_time, ros::Duration(0.5) );
-				listener.lookupTransform("map", "laserodometry", odom_time, map_to_laserodometry );
+				listener.waitForTransform("map", reference_tf_frame_name, odom_time, ros::Duration(0.5) );
+				listener.lookupTransform("map",  reference_tf_frame_name, odom_time, map_to_laserodometry );
 
 				//ROS_INFO("GET TRANSFORM MAP TO KASERODOMETRY IN LASERMAPPING PROCESS");
 				
@@ -547,7 +558,7 @@ namespace semloam{
 
 	void LaserMapping::convert_coordinate_of_pc(){
 
-		pcl_ros::transformPointCloud("map", odom_time, velo_scans, "laserodometry", velo_scans, listener);
+		pcl_ros::transformPointCloud("map", odom_time, velo_scans, reference_tf_frame_name, velo_scans, listener);
 		//pcl_ros::transformPointCloud("map", odom_time, cloud_edge, "laserodometry", cloud_edge, listener);
 		//pcl_ros::transformPointCloud("map", odom_time, cloud_centroid, "laserodometry", cloud_centroid, listener);
 
