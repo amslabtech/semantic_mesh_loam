@@ -40,6 +40,7 @@ namespace semloam{
 	void LaserMapping::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& clouddata){
 
 		pcl::fromROSMsg( *clouddata , velo_scans );
+        velo_scans.header.frame_id = reference_tf_frame_name;
 
 		velo_checker = true;
 
@@ -102,7 +103,7 @@ namespace semloam{
 		std::string strparam;
 
         if( privateNode.getParam("ReferenceFrame" , strparam ) ){
-            if( strparam=="laserodometry" || strparam=="ground_truth"){
+            if( strparam=="laserodometry" || strparam=="ground_truth" || strparam=="vehicle"){
                 reference_tf_frame_name = strparam;
                 std::cout << "Reference frame: " << reference_tf_frame_name << std::endl;
             }
@@ -733,6 +734,9 @@ namespace semloam{
 		classify_pointcloud();
 
 		if( (counter % scan_counter) == 0 ){
+
+            Time start_sec = ros::Time::now();
+
 			//do voxel grid reducion per semantic point cloud
 			do_voxel_grid();
 
@@ -748,6 +752,11 @@ namespace semloam{
 			
 			//clear semantic point cloud like car and outlier
 			reset_semantic_cloud();
+
+            Time end_sec = ros::Time::now();
+
+            double duration_time = end_sec.toSec() - start_sec.toSec();
+            std::cout << "Process time:" << duration_time << std::endl;
 		}
 
 		//clear common pointcloud like
