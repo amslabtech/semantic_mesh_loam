@@ -1,0 +1,62 @@
+<launch>
+    <node pkg="semantic_mesh_loam" type="classify_pointcloud" name="classify_pointcloud" output="screen">
+        <param name="lidar" value="HDL-64E" />
+    </node>
+    
+    <node pkg="semantic_mesh_loam" type="laser_odometry" name="laser_odometry" output="screen">
+        <param name="systemdelay" value="50" type="int"/>
+        <param name="MaxCorrespondDistance" value="0.40" type="double"/>
+    </node>
+    
+    <arg name="PCDpath" default="/home/amsl/PCD_data/sequence00_12_05_1830/" />
+    <arg name="PCDfilename" default="semantic_mesh_loam" />
+
+    <node pkg="semantic_mesh_loam" type="laser_mapping" name="laser_mapping" output="screen">
+        <!---LeafSize-->
+        <param name="unlabeledleafsize"      value="0.00" type="double" />
+        <param name="outlierleafsize"        value="0.00" type="double" />
+        <param name="carleafsize"            value="0.30" type="double" />
+        <param name="bicycleleafsize"        value="0.05" type="double" />
+        <param name="busleafsize"            value="0.25" type="double" />
+        <param name="motorcycleleafsize"     value="0.05" type="double" />
+        <param name="onrailsleafsize"        value="0.10" type="double" />
+        <param name="truckleafsize"          value="0.20" type="double" />
+        <param name="othervehicleleafsize"   value="0.10" type="double" />
+        <param name="roadleafsize"           value="0.35" type="double" />
+        <param name="parkingleafsize"        value="0.38" type="double" />
+        <param name="sidewalkleafsize"       value="0.38" type="double" />
+        <param name="othergroundleafsize"    value="0.35" type="double" />
+        <param name="buildingleafsize"       value="0.35" type="double" />
+        <param name="fenceleafsize"          value="0.30" type="double" />
+        <param name="otherstructureleafsize" value="0.30" type="double" />
+        <param name="lanemarkingleafsize"    value="0.10" type="double" />
+        <param name="vegetationleafsize"     value="0.30" type="double" />
+        <param name="trunkleafsize"          value="0.20" type="double" />
+        <param name="terrainleafsize"        value="0.35" type="double" />
+        <param name="poleleafsize"           value="0.10" type="double" />
+        <param name="trafficsignleafsize"    value="0.01" type="double" />
+
+        <param name="ReferenceFrame" value="vehicle" />
+        <param name="scancounter" value="150" type="int"/>
+        
+        <param name="systemdelay" value="5" type="int" />
+        <param name="filepath" value="$(arg PCDpath)" />
+        <param name="filename" value="$(arg PCDfilename)" />
+
+        <param name="PCDsaveChecker" value="true" type="bool" />
+        <param name="ROSpublishChecker" value="true" type="bool" />
+        
+        <param name="PCDsaveAscii" value="true" type="bool" />
+        <param name="PCDsaveBinary" value="false" type="bool" />
+    </node>
+    
+    <arg name="path" default="/home/amsl/bag_data/" />
+    <arg name="file_1" default="semantickitti_sequence00" />
+    <arg name="play_speed" default="-r 0.2" />
+    
+    <node pkg="rosbag" type="play" name="rosbag_play" output="screen" args="$(arg path)$(arg file_1).bag $(arg play_speed)" />
+    
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_mesh_loam)/config/test_laser_mapping.rviz"/>
+
+</launch>
+
