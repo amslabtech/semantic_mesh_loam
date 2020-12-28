@@ -4,9 +4,9 @@
 		<param name="lidar" value="HDL-64E" />
 	</node>
 
-	<arg name="path" default="/home/amsl/bag_data/" />
+	<arg name="path" default="/home/amsl/bag_data/semantic_kitti_dataset/" />
 	<arg name="file_1" default="semantickitti_sequence00" />
-	<arg name="play_speed" default="-r 0.1" />
+	<arg name="play_speed" default="-r 1.0" />
 
 	<node pkg="rosbag" type="play" name="rosbag_play" output="screen"
 	args="$(arg path)$(arg file_1).bag $(arg play_speed)" />
